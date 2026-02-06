@@ -13,6 +13,11 @@ struct AppWindowView: View {
                         .font(.headline)
                     Text("Use the status bar icon or hotkey to open overlay.")
                         .foregroundStyle(.secondary)
+                    if let message = viewModel.permissionHint {
+                        Text(message)
+                            .font(.callout)
+                            .foregroundStyle(.orange)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding(16)

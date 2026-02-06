@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 
@@ -7,4 +8,5 @@ final class OverlaySceneState: ObservableObject {
     @Published var appName = ""
     @Published var appBundleID = ""
     @Published var shortcuts: [Shortcut] = []
+    @Published var appIcon: NSImage?
 }

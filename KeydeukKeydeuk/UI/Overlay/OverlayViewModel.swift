@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 
@@ -66,6 +67,7 @@ final class OverlayViewModel: ObservableObject {
     var isVisible: Bool { state.isVisible }
     var appName: String { state.appName }
     var appBundleID: String { state.appBundleID }
+    var appIcon: NSImage? { state.appIcon }
     var autoHideOnEsc: Bool { preferences.autoHideOnEsc }
     var autoHideOnAppSwitch: Bool { preferences.autoHideOnAppSwitch }
     var canFinishOnboarding: Bool { permissionState == .granted }

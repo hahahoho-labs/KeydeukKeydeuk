@@ -5,11 +5,14 @@ struct OverlayPanelView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.48)
+            Color.black.opacity(0.55)
                 .ignoresSafeArea()
+                .onTapGesture {
+                    viewModel.requestHide()
+                }
 
             OverlayView(viewModel: viewModel)
-                .frame(maxWidth: 1120, maxHeight: 720)
+                .frame(maxWidth: 1280, maxHeight: 820)
                 .padding(32)
         }
         .onExitCommand {
