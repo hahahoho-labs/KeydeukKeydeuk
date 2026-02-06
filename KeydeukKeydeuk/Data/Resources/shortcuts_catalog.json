@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "bundleID": "com.apple.Safari",
+      "appName": "Safari",
+      "shortcuts": [
+        { "id": "safari.new_tab", "title": "New Tab", "keys": "⌘T", "section": "Tabs" },
+        { "id": "safari.close_tab", "title": "Close Tab", "keys": "⌘W", "section": "Tabs" },
+        { "id": "safari.open_location", "title": "Open Location", "keys": "⌘L", "section": "Navigation" }
+      ]
+    },
+    {
+      "bundleID": "com.apple.TextEdit",
+      "appName": "TextEdit",
+      "shortcuts": [
+        { "id": "textedit.new", "title": "New", "keys": "⌘N", "section": "File" },
+        { "id": "textedit.save", "title": "Save", "keys": "⌘S", "section": "File" },
+        { "id": "textedit.find", "title": "Find", "keys": "⌘F", "section": "Edit" }
+      ]
+    }
+  ]
+}
