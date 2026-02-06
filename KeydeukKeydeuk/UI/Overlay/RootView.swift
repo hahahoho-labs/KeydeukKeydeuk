@@ -27,7 +27,7 @@ struct RootView: View {
                 }
             )
 
-            SettingsView(viewModel: viewModel)
+            OnboardingTriggerSettingsView(viewModel: viewModel)
 
             HStack {
                 Spacer()
