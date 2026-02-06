@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import Foundation
+import SwiftUI
 
 @MainActor
 final class AppContainer {
@@ -8,6 +9,8 @@ final class AppContainer {
 
     private let orchestrator: AppOrchestrator
     private let statusBarController: StatusBarController
+    private let overlayPanelController: OverlayPanelController
+    private var settingsWindowController: NSWindowController?
     private var cancellables: Set<AnyCancellable> = []
 
     init() {
@@ -52,6 +55,7 @@ final class AppContainer {
             updatePreferencesUseCase: updatePreferences,
             openAccessibilitySettings: openAccessibilitySettings
         )
+        self.overlayPanelController = OverlayPanelController(state: overlayState, viewModel: overlayViewModel)
 
         self.orchestrator = AppOrchestrator(
             eventSource: eventSource,
@@ -64,16 +68,27 @@ final class AppContainer {
         )
 
         self.statusBarController = StatusBarController()
-        self.statusBarController.onPrimaryClick = { [weak overlayViewModel] in
+        self.statusBarController.onPrimaryClick = { [weak self, weak overlayViewModel] in
+            guard let self else { return }
             guard let overlayViewModel else { return }
             Task { @MainActor in
                 await overlayViewModel.requestShow()
+                if overlayViewModel.isVisible {
+                    return
+                }
+                NSApp.activate(ignoringOtherApps: true)
+                if overlayViewModel.needsOnboarding {
+                    self.bringMainWindowToFront()
+                }
             }
         }
-        self.statusBarController.onSettingsClick = { [weak overlayViewModel] in
-            // Settings window is planned next. Bring app forward for now.
+        self.statusBarController.onSettingsClick = { [weak self, weak overlayViewModel] in
+            guard let self else { return }
             NSApp.activate(ignoringOtherApps: true)
-            overlayViewModel?.showInfoMessage("Settings window is coming soon.")
+            self.presentSettingsWindow()
+            if self.settingsWindowController == nil {
+                overlayViewModel?.showInfoMessage("Unable to open Settings window.")
+            }
         }
 
         overlayViewModel.$needsOnboarding
@@ -86,6 +101,7 @@ final class AppContainer {
 
     func start() {
         overlayViewModel.refreshPreferences()
+        overlayPanelController.start()
         statusBarController.start()
         orchestrator.start()
         applyAppPresentation(needsOnboarding: overlayViewModel.needsOnboarding)
@@ -95,10 +111,37 @@ final class AppContainer {
         if needsOnboarding {
             NSApp.setActivationPolicy(.regular)
             NSApp.activate(ignoringOtherApps: true)
+            bringMainWindowToFront()
             return
         }
 
         NSApp.setActivationPolicy(.accessory)
-        NSApp.windows.forEach { $0.close() }
+        overlayPanelController.hide()
+        NSApp.windows.forEach { $0.orderOut(nil) }
+    }
+
+    private func bringMainWindowToFront() {
+        if let window = NSApp.windows.first(where: { $0.title == "Onboarding" || $0.title == "KeydeukKeydeuk" }) {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+        NSApp.windows.first?.makeKeyAndOrderFront(nil)
+    }
+
+    private func presentSettingsWindow() {
+        if let existingWindow = settingsWindowController?.window {
+            existingWindow.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let host = NSHostingController(rootView: SettingsWindowView(viewModel: overlayViewModel))
+        let window = NSWindow(contentViewController: host)
+        window.title = "KeydeukKeydeuk Settings"
+        window.styleMask = NSWindow.StyleMask([.titled, .closable, .miniaturizable])
+        window.setContentSize(NSSize(width: 560, height: 320))
+        window.center()
+        let controller = NSWindowController(window: window)
+        controller.showWindow(nil)
+        settingsWindowController = controller
     }
 }

@@ -18,23 +18,12 @@ struct KeydeukKeydeukApp: App {
 
     var body: some Scene {
         WindowGroup("Onboarding") {
-            Group {
-                if viewModel.needsOnboarding {
-                    RootView(viewModel: viewModel)
-                        .frame(minWidth: 720, minHeight: 520)
-                } else {
-                    Color.clear
-                        .frame(width: 1, height: 1)
-                        .onAppear {
-                            NSApp.windows.forEach { $0.close() }
-                        }
-                }
-            }
+            AppWindowView(viewModel: viewModel)
+                .frame(minWidth: 720, minHeight: 520)
         }
 
         Settings {
-            Text("Settings window is not implemented yet.")
-                .padding(20)
+            SettingsWindowView(viewModel: viewModel)
         }
     }
 }

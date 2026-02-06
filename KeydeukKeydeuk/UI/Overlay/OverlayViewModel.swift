@@ -24,6 +24,7 @@ final class OverlayViewModel: ObservableObject {
     private let hideOverlay: HideOverlayUseCase
     private let updatePreferencesUseCase: UpdatePreferencesUseCase
     private let openAccessibilitySettings: OpenAccessibilitySettingsUseCase
+    private var cancellables: Set<AnyCancellable> = []
 
     let hotkeyPresets: [HotkeyPreset] = [
         HotkeyPreset(id: "cmd-shift-k", title: "Command + Shift + K", keyCode: 40, modifiers: [.command, .shift]),
@@ -54,10 +55,17 @@ final class OverlayViewModel: ObservableObject {
         self.preferences = initialPreferences
         self.permissionState = getAccessibilityPermissionState.execute()
         self.needsOnboarding = !initialPreferences.hasCompletedOnboarding
+
+        state.objectWillChange
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
     }
 
     var isVisible: Bool { state.isVisible }
     var appName: String { state.appName }
+    var appBundleID: String { state.appBundleID }
     var autoHideOnEsc: Bool { preferences.autoHideOnEsc }
     var autoHideOnAppSwitch: Bool { preferences.autoHideOnAppSwitch }
     var canFinishOnboarding: Bool { permissionState == .granted }

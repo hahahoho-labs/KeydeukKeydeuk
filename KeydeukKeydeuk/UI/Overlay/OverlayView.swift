@@ -5,28 +5,45 @@ struct OverlayView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Focused App")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(viewModel.appName)
+                    .font(.headline)
+                Text(viewModel.appBundleID)
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+            }
+
             TextField("Search shortcuts", text: $viewModel.query)
                 .textFieldStyle(.roundedBorder)
 
-            Text(viewModel.appName)
-                .font(.headline)
-
-            List(viewModel.filteredShortcuts) { shortcut in
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(shortcut.title)
-                        if let section = shortcut.section {
-                            Text(section)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+            if viewModel.filteredShortcuts.isEmpty {
+                ContentUnavailableView(
+                    "No shortcuts yet",
+                    systemImage: "keyboard",
+                    description: Text("Catalog data for this app is not added yet.")
+                )
+                .frame(minHeight: 280)
+            } else {
+                List(viewModel.filteredShortcuts) { shortcut in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(shortcut.title)
+                            if let section = shortcut.section {
+                                Text(section)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                        Spacer()
+                        Text(shortcut.keys)
+                            .font(.body.monospaced())
                     }
-                    Spacer()
-                    Text(shortcut.keys)
-                        .font(.body.monospaced())
                 }
+                .frame(minHeight: 280)
             }
-            .frame(minHeight: 280)
         }
         .padding(14)
         .background(.thinMaterial)

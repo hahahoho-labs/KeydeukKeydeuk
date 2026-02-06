@@ -35,8 +35,11 @@ struct ShowOverlayForCurrentAppUseCase {
             return .noFocusedApp
         }
 
-        guard let catalog = try? await loadShortcuts.execute(bundleID: app.bundleID) else {
-            return .noCatalog
+        let catalog: ShortcutCatalog
+        if let loaded = try? await loadShortcuts.execute(bundleID: app.bundleID) {
+            catalog = loaded
+        } else {
+            catalog = ShortcutCatalog(bundleID: app.bundleID, appName: app.appName, shortcuts: [])
         }
 
         presenter.show(catalog: catalog, app: app)

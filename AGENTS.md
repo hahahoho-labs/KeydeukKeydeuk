@@ -15,7 +15,7 @@ KeydeukKeydeuk는 macOS용 단축키 치트시트(오버레이) MVP 프로젝트
 2. 온보딩 완료 후에는 StatusBar 아이콘 중심으로 앱 사용
 3. StatusBar 아이콘 좌클릭(한 손가락 클릭) 시 오버레이 표시 트리거
 4. StatusBar 아이콘 우클릭(트랙패드 두 손가락 클릭) 시 메뉴 드롭다운
-5. 설정 창은 후속 단계에서 구현
+5. Settings 메뉴에서 설정 창을 열어 트리거 설정 변경
 
 ## 아키텍처 원칙
 - Domain은 정책/규칙만 가진다.
@@ -66,7 +66,7 @@ KeydeukKeydeuk/
 - Platform
   - macOS 시스템 연동(NSEvent, AX 권한, 전면 앱 감지, 오버레이 호스트, 시스템 설정 열기, StatusBar 아이콘/메뉴)
 - UI
-  - SwiftUI View + ViewModel(MVVM), 온보딩 액션/트리거 설정 UI
+  - SwiftUI View + ViewModel(MVVM), 온보딩/오버레이/설정 창 UI
 
 ## 정적 의존성(컴파일 타임)
 ```mermaid
@@ -111,12 +111,8 @@ sequenceDiagram
     else granted
       SS->>AC: 현재 전면 앱 조회
       SS->>SR: bundleID로 단축키 로드
-      alt catalog 있음
-        SS->>OP: show(catalog, app)
-        OP-->>UI: 오버레이 표시
-      else catalog 없음
-        SS-->>UI: noCatalog 상태
-      end
+      SS->>OP: show(catalog or emptyCatalog, app)
+      OP-->>UI: 오버레이 표시
     end
   else hide
     EA->>OP: hide()
@@ -170,13 +166,18 @@ sequenceDiagram
   participant SB as Platform.StatusBarController
   participant VM as OverlayViewModel
   participant SO as UseCase.ShowOverlayForCurrentApp
+  participant OP as OverlayPanelController(NSPanel)
 
   SB->>VM: 좌클릭(primary click)
   VM->>SO: requestShow()
-  SO-->>VM: shown / needsPermission / noCatalog
+  SO-->>VM: shown / needsPermission / noFocusedApp
+  VM->>OP: state.isVisible=true 반영
+  OP-->>User: 전체 화면 딤 + 중앙 오버레이 패널 표시
 
   SB->>SB: 우클릭(두 손가락 클릭)
   SB-->>User: Settings / Quit 메뉴 표시
+  SB-->>User: Settings 선택 시 설정 창 열기
+  Note over SB: showSettingsWindow 액션 실패 시\nAppContainer가 fallback NSWindow로 Settings 표시
 ```
 
 ## 현재 MVP 범위
@@ -192,13 +193,18 @@ sequenceDiagram
 - 핫키 프리셋/자동숨김 토글 설정 저장(UserDefaults)
 - 내장 JSON 카탈로그(`Data/Resources/shortcuts_catalog.json`) 기반 단축키 로드
 - 온보딩 완료 후 StatusBar 중심 동작(좌클릭 트리거, 우클릭 메뉴)
+- 오버레이는 일반 앱 창이 아니라 NSPanel 기반 전체 화면 딤 오버레이로 표시
+- 온보딩 완료 후 메인 창은 숨김(orderOut) 처리되며, 오버레이는 별도 패널에서 표시/숨김
+- 오버레이 상단에 현재 포커스 앱 이름/번들ID를 표시
+- 상태바 클릭 후 오버레이 표시 실패 시(권한/포커스 앱 문제) 설정창 또는 온보딩 창으로 fallback하여 무반응 상태를 줄임
+- 현재 앱 카탈로그가 없더라도 빈 오버레이를 표시하고, 화면에서 "No shortcuts yet" 안내를 보여줌
 
 ## 확장 포인트
 - AX 기반 자동 추출 Repository 추가
 - Overlay를 실제 NSWindow 레벨/포지션 제어로 확장
 - BillingService 구현(StoreKit 결제/구독)
 - Cache 계층 도입
-- StatusBar의 Settings 메뉴에서 독립 설정 창 오픈(현재 placeholder)
+- 핫키 직접 입력 캡처 UI(프리셋 외 사용자 정의)
 
 ## 구현 시 주의사항
 - ViewModel이 Platform 구현체를 직접 참조하지 않기

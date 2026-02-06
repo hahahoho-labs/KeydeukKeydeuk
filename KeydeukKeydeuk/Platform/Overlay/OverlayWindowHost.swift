@@ -10,6 +10,7 @@ final class OverlayWindowHost: OverlayPresenter {
 
     func show(catalog: ShortcutCatalog, app: AppContext) {
         state.appName = app.appName
+        state.appBundleID = app.bundleID
         state.shortcuts = catalog.shortcuts
         state.isVisible = true
     }
