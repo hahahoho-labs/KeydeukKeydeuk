@@ -1,7 +1,10 @@
 import AppKit
 import Combine
 import Foundation
+import os
 import SwiftUI
+
+private let log = Logger(subsystem: "hexdrinker.KeydeukKeydeuk", category: "AppContainer")
 
 @MainActor
 final class AppContainer {
@@ -15,7 +18,7 @@ final class AppContainer {
 
     init() {
         let preferencesStore = UserDefaultsPreferencesStore()
-        let shortcutRepository = JSONCatalogRepository()
+        let shortcutRepository = AXMenuBarShortcutRepository()
 
         let overlayState = OverlaySceneState()
 
@@ -71,14 +74,20 @@ final class AppContainer {
         self.statusBarController.onPrimaryClick = { [weak self, weak overlayViewModel] in
             guard let self else { return }
             guard let overlayViewModel else { return }
+            log.info("🖱️ StatusBar 좌클릭 — 오버레이 표시 시도")
             Task { @MainActor in
                 await overlayViewModel.requestShow()
                 if overlayViewModel.isVisible {
+                    log.info("✅ 오버레이 표시 성공")
                     return
                 }
+                // 오버레이 표시 실패 → 원인에 따라 fallback UI 제공
+                log.warning("⚠️ 오버레이 표시 실패 — fallback UI 진입 (needsOnboarding: \(overlayViewModel.needsOnboarding))")
                 NSApp.activate(ignoringOtherApps: true)
                 if overlayViewModel.needsOnboarding {
                     self.bringMainWindowToFront()
+                } else {
+                    self.presentSettingsWindow()
                 }
             }
         }
@@ -105,6 +114,12 @@ final class AppContainer {
         statusBarController.start()
         orchestrator.start()
         applyAppPresentation(needsOnboarding: overlayViewModel.needsOnboarding)
+
+        // WindowGroup can be created after start(); re-apply presentation on next runloop.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.applyAppPresentation(needsOnboarding: self.overlayViewModel.needsOnboarding)
+        }
     }
 
     private func applyAppPresentation(needsOnboarding: Bool) {

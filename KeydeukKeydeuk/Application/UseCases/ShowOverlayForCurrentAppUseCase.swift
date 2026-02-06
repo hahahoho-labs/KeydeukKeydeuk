@@ -1,4 +1,7 @@
 import Foundation
+import os
+
+private let log = Logger(subsystem: "hexdrinker.KeydeukKeydeuk", category: "ShowOverlay")
 
 struct ShowOverlayForCurrentAppUseCase {
     enum Result: Equatable {
@@ -27,22 +30,31 @@ struct ShowOverlayForCurrentAppUseCase {
 
     @MainActor
     func execute() async -> Result {
-        guard permissionChecker.state(for: .accessibility) == .granted else {
+        let permState = permissionChecker.state(for: .accessibility)
+        log.info("🔐 접근성 권한 상태: \(String(describing: permState))")
+
+        guard permState == .granted else {
+            log.warning("⛔ 접근성 권한 없음 → .needsPermission 반환")
             return .needsPermission
         }
 
         guard let app = appContextProvider.currentApp() else {
+            log.warning("⚠️ 포커스된 앱 감지 실패 → .noFocusedApp 반환")
             return .noFocusedApp
         }
+        log.info("🖥️ 포커스 앱: \(app.appName) (\(app.bundleID))")
 
         let catalog: ShortcutCatalog
         if let loaded = try? await loadShortcuts.execute(bundleID: app.bundleID) {
             catalog = loaded
+            log.info("📦 카탈로그 로드 완료: \(catalog.shortcuts.count)개 단축키 (소스: AX API)")
         } else {
             catalog = ShortcutCatalog(bundleID: app.bundleID, appName: app.appName, shortcuts: [])
+            log.warning("📦 카탈로그 로드 실패 → 빈 fallback 카탈로그 사용")
         }
 
         presenter.show(catalog: catalog, app: app)
+        log.info("✅ 오버레이 표시 요청 완료 → .shown")
         return .shown
     }
 }
