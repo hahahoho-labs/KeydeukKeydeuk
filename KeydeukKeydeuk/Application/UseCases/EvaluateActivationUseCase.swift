@@ -2,15 +2,12 @@ import Foundation
 
 struct EvaluateActivationUseCase {
     private let policy: ActivationPolicy
-    private let preferencesStore: PreferencesStore
 
-    init(policy: ActivationPolicy, preferencesStore: PreferencesStore) {
+    init(policy: ActivationPolicy) {
         self.policy = policy
-        self.preferencesStore = preferencesStore
     }
 
-    func execute(event: KeyEvent) -> ActivationDecision {
-        let preferences = preferencesStore.load()
-        return policy.evaluate(event: event, preferences: preferences)
+    func execute(event: KeyEvent, preferences: Preferences) -> ActivationDecision {
+        policy.evaluate(event: event, preferences: preferences)
     }
 }

@@ -34,8 +34,7 @@ final class AppContainer {
         let activationPolicy = DefaultActivationPolicy()
 
         let evaluateActivation = EvaluateActivationUseCase(
-            policy: activationPolicy,
-            preferencesStore: preferencesStore
+            policy: activationPolicy
         )
         let loadShortcuts = LoadShortcutsForAppUseCase(repository: shortcutRepository)
         let loadPreferences = LoadPreferencesUseCase(preferencesStore: preferencesStore)
@@ -79,11 +78,19 @@ final class AppContainer {
             evaluateActivation: evaluateActivation,
             showOverlay: showOverlay,
             hideOverlay: hideOverlay,
-            preferencesStore: preferencesStore,
+            initialPreferences: settingsViewModel.preferences,
             onShowResult: { [weak self] result in
                 self?.handleShowResult(result)
             }
         )
+
+        // 설정 변경 시 Orchestrator에 전파 (Store 직접 참조 대신 Combine 구독)
+        settingsViewModel.$preferences
+            .dropFirst() // 초기값은 이미 initialPreferences로 전달됨
+            .sink { [weak self] prefs in
+                self?.orchestrator?.updatePreferences(prefs)
+            }
+            .store(in: &cancellables)
         self.statusBarController.onPrimaryClick = { [weak self] in
             guard let self else { return }
             log.info("🖱️ StatusBar 좌클릭 — 오버레이 표시 시도")

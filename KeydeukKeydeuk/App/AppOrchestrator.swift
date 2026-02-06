@@ -9,8 +9,9 @@ final class AppOrchestrator {
     private let evaluateActivation: EvaluateActivationUseCase
     private let showOverlay: ShowOverlayForCurrentAppUseCase
     private let hideOverlay: HideOverlayUseCase
-    private let preferencesStore: PreferencesStore
     private let onShowResult: @MainActor (ShowOverlayForCurrentAppUseCase.Result) -> Void
+
+    private var currentPreferences: Preferences
 
     // Hold 트리거 상태
     private var holdTimer: DispatchWorkItem?
@@ -21,25 +22,38 @@ final class AppOrchestrator {
         evaluateActivation: EvaluateActivationUseCase,
         showOverlay: ShowOverlayForCurrentAppUseCase,
         hideOverlay: HideOverlayUseCase,
-        preferencesStore: PreferencesStore,
+        initialPreferences: Preferences,
         onShowResult: @escaping @MainActor (ShowOverlayForCurrentAppUseCase.Result) -> Void
     ) {
         self.eventSource = eventSource
         self.evaluateActivation = evaluateActivation
         self.showOverlay = showOverlay
         self.hideOverlay = hideOverlay
-        self.preferencesStore = preferencesStore
+        self.currentPreferences = initialPreferences
         self.onShowResult = onShowResult
+    }
+
+    // MARK: - Preferences 갱신
+
+    func updatePreferences(_ preferences: Preferences) {
+        let triggerChanged = currentPreferences.trigger != preferences.trigger
+        currentPreferences = preferences
+
+        // 트리거 타입이 변경되면 진행 중인 홀드 상태 초기화
+        if triggerChanged {
+            cancelHold()
+            holdTriggered = false
+            log.info("트리거 타입 변경 → 홀드 상태 초기화")
+        }
     }
 
     func start() {
         eventSource.onEvent = { [weak self] event in
             guard let self else { return }
-            let prefs = self.preferencesStore.load()
 
-            switch prefs.trigger {
+            switch self.currentPreferences.trigger {
             case .holdCommand:
-                self.handleHoldCommand(event: event, duration: prefs.holdDurationSeconds)
+                self.handleHoldCommand(event: event, duration: self.currentPreferences.holdDurationSeconds)
             case .globalHotkey:
                 self.handleGlobalHotkey(event: event)
             }
@@ -110,7 +124,7 @@ final class AppOrchestrator {
         // flagsChanged 이벤트는 글로벌 핫키 모드에서는 무시
         guard !event.isFlagsChanged else { return }
 
-        let decision = evaluateActivation.execute(event: event)
+        let decision = evaluateActivation.execute(event: event, preferences: currentPreferences)
         Task { @MainActor in
             switch decision {
             case .activate:
