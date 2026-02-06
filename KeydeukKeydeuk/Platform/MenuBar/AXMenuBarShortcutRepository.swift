@@ -36,7 +36,19 @@ struct AXMenuBarShortcutRepository: ShortcutRepository {
             return ShortcutCatalog(bundleID: bundleID, appName: appName, shortcuts: [])
         }
 
-        let menuBar = menuBarValue as! AXUIElement
+        guard let menuBarRef = menuBarValue else {
+            log.error("❌ 메뉴바 참조가 nil (앱: \(appName))")
+            return ShortcutCatalog(bundleID: bundleID, appName: appName, shortcuts: [])
+        }
+
+        // AXUIElement는 CFTypeRef이므로 타입 ID로 검증
+        guard CFGetTypeID(menuBarRef) == AXUIElementGetTypeID() else {
+            log.error("❌ 메뉴바 참조가 AXUIElement가 아님 (앱: \(appName), typeID: \(CFGetTypeID(menuBarRef)))")
+            return ShortcutCatalog(bundleID: bundleID, appName: appName, shortcuts: [])
+        }
+
+        // swiftlint:disable:next force_cast
+        let menuBar = menuBarRef as! AXUIElement
         let shortcuts = extractAllShortcuts(from: menuBar, appName: appName)
         log.info("✅ AX 추출 성공: \(appName) → \(shortcuts.count)개 단축키")
 

@@ -1,6 +1,9 @@
 import AppKit
 import ApplicationServices
 import Foundation
+import os
+
+private let log = Logger(subsystem: "hexdrinker.KeydeukKeydeuk", category: "PermissionGuide")
 
 struct SystemPermissionGuide: PermissionGuide {
     func requestAccessibilityPermissionPrompt() -> Bool {
@@ -13,8 +16,13 @@ struct SystemPermissionGuide: PermissionGuide {
         _ = requestAccessibilityPermissionPrompt()
 
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") else {
+            log.error("접근성 설정 URL 생성 실패")
             return
         }
-        NSWorkspace.shared.open(url)
+
+        let opened = NSWorkspace.shared.open(url)
+        if !opened {
+            log.error("시스템 접근성 설정 열기 실패: \(url.absoluteString)")
+        }
     }
 }

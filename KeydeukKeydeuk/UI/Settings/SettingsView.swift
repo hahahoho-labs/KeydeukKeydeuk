@@ -9,12 +9,37 @@ struct GeneralSettingsTab: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                if let error = settingsVM.errorMessage {
+                    errorBanner(error)
+                }
                 activationSection
                 behaviorSection
                 permissionSection
             }
             .padding(20)
         }
+    }
+
+    // MARK: - Error Banner
+
+    private func errorBanner(_ message: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.yellow)
+            Text(message)
+                .font(.callout)
+            Spacer()
+            Button {
+                settingsVM.dismissError()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(12)
+        .background(Color.red.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     // MARK: - Activation

@@ -45,12 +45,17 @@ struct ShowOverlayForCurrentAppUseCase {
         log.info("🖥️ 포커스 앱: \(app.appName) (\(app.bundleID))")
 
         let catalog: ShortcutCatalog
-        if let loaded = try? await loadShortcuts.execute(bundleID: app.bundleID) {
-            catalog = loaded
-            log.info("📦 카탈로그 로드 완료: \(catalog.shortcuts.count)개 단축키 (소스: AX API)")
-        } else {
+        do {
+            if let loaded = try await loadShortcuts.execute(bundleID: app.bundleID) {
+                catalog = loaded
+                log.info("📦 카탈로그 로드 완료: \(catalog.shortcuts.count)개 단축키 (소스: AX API)")
+            } else {
+                catalog = ShortcutCatalog(bundleID: app.bundleID, appName: app.appName, shortcuts: [])
+                log.info("📦 앱에 메뉴바 단축키 없음 → 빈 카탈로그")
+            }
+        } catch {
             catalog = ShortcutCatalog(bundleID: app.bundleID, appName: app.appName, shortcuts: [])
-            log.warning("📦 카탈로그 로드 실패 → 빈 fallback 카탈로그 사용")
+            log.error("📦 단축키 추출 실패: \(error.localizedDescription) → 빈 카탈로그로 대체")
         }
 
         presenter.show(catalog: catalog, app: app)

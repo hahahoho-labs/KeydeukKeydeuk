@@ -14,6 +14,7 @@ final class SettingsViewModel: ObservableObject {
     }
 
     @Published private(set) var preferences: Preferences
+    @Published private(set) var errorMessage: String?
 
     private let loadPreferences: LoadPreferencesUseCase
     private let updatePreferencesUseCase: UpdatePreferencesUseCase
@@ -78,14 +79,20 @@ final class SettingsViewModel: ObservableObject {
 
     // MARK: - Private
 
+    func dismissError() {
+        errorMessage = nil
+    }
+
     private func updatePreferences(_ mutate: (inout Preferences) -> Void) {
         var next = preferences
         mutate(&next)
         do {
             try updatePreferencesUseCase.execute(next)
             preferences = next
+            errorMessage = nil
         } catch {
             log.error("설정 저장 실패: \(error.localizedDescription)")
+            errorMessage = "Failed to save settings. Please try again."
         }
     }
 }
