@@ -13,6 +13,14 @@ struct KeyEvent: Equatable {
     let keyCode: Int
     let modifiers: KeyModifiers
     let isKeyDown: Bool
+    let isFlagsChanged: Bool
+
+    init(keyCode: Int, modifiers: KeyModifiers, isKeyDown: Bool, isFlagsChanged: Bool = false) {
+        self.keyCode = keyCode
+        self.modifiers = modifiers
+        self.isKeyDown = isKeyDown
+        self.isFlagsChanged = isFlagsChanged
+    }
 }
 
 enum ActivationDecision: Equatable {
