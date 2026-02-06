@@ -2,7 +2,8 @@ import AppKit
 import SwiftUI
 
 struct SettingsWindowView: View {
-    @ObservedObject var viewModel: OverlayViewModel
+    @ObservedObject var settingsVM: SettingsViewModel
+    @ObservedObject var onboardingVM: OnboardingViewModel
     @State private var selectedTab: SettingsTab = .general
 
     enum SettingsTab: String, CaseIterable {
@@ -37,10 +38,10 @@ struct SettingsWindowView: View {
         }
         .frame(minWidth: 600, minHeight: 440)
         .onAppear {
-            viewModel.refreshPermissionState()
+            onboardingVM.refreshPermissionState()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            viewModel.refreshPermissionState()
+            onboardingVM.refreshPermissionState()
         }
     }
 
@@ -83,7 +84,7 @@ struct SettingsWindowView: View {
     private var tabContent: some View {
         switch selectedTab {
         case .general:
-            GeneralSettingsTab(viewModel: viewModel)
+            GeneralSettingsTab(settingsVM: settingsVM, onboardingVM: onboardingVM)
         case .theme:
             ThemeSettingsTab()
         case .help:

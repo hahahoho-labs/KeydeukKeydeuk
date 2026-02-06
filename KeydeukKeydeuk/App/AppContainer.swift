@@ -9,8 +9,10 @@ private let log = Logger(subsystem: "hexdrinker.KeydeukKeydeuk", category: "AppC
 @MainActor
 final class AppContainer {
     let overlayViewModel: OverlayViewModel
+    let settingsViewModel: SettingsViewModel
+    let onboardingViewModel: OnboardingViewModel
 
-    private let orchestrator: AppOrchestrator
+    private var orchestrator: AppOrchestrator?
     private let statusBarController: StatusBarController
     private let overlayPanelController: OverlayPanelController
     private var settingsWindowController: NSWindowController?
@@ -49,17 +51,28 @@ final class AppContainer {
         let updatePreferences = UpdatePreferencesUseCase(preferencesStore: preferencesStore)
         let openAccessibilitySettings = OpenAccessibilitySettingsUseCase(permissionGuide: permissionGuide)
 
+        // ViewModel 조립
         self.overlayViewModel = OverlayViewModel(
             state: overlayState,
+            showOverlay: showOverlay,
+            hideOverlay: hideOverlay
+        )
+
+        self.settingsViewModel = SettingsViewModel(
+            loadPreferences: loadPreferences,
+            updatePreferences: updatePreferences
+        )
+
+        self.onboardingViewModel = OnboardingViewModel(
             loadPreferences: loadPreferences,
             getAccessibilityPermissionState: getAccessibilityPermissionState,
             requestAccessibilityPermission: requestAccessibilityPermission,
-            showOverlay: showOverlay,
-            hideOverlay: hideOverlay,
-            updatePreferencesUseCase: updatePreferences,
-            openAccessibilitySettings: openAccessibilitySettings
+            openAccessibilitySettings: openAccessibilitySettings,
+            updatePreferences: updatePreferences
         )
+
         self.overlayPanelController = OverlayPanelController(state: overlayState, viewModel: overlayViewModel)
+        self.statusBarController = StatusBarController()
 
         self.orchestrator = AppOrchestrator(
             eventSource: eventSource,
@@ -67,32 +80,29 @@ final class AppContainer {
             showOverlay: showOverlay,
             hideOverlay: hideOverlay,
             preferencesStore: preferencesStore,
-            onShowResult: { [weak overlayViewModel] result in
-                overlayViewModel?.handle(showResult: result)
+            onShowResult: { [weak self] result in
+                self?.handleShowResult(result)
             }
         )
-
-        self.statusBarController = StatusBarController()
-        self.statusBarController.onPrimaryClick = { [weak self, weak overlayViewModel] in
+        self.statusBarController.onPrimaryClick = { [weak self] in
             guard let self else { return }
-            guard let overlayViewModel else { return }
             log.info("🖱️ StatusBar 좌클릭 — 오버레이 표시 시도")
             Task { @MainActor in
-                await overlayViewModel.requestShow()
-                if overlayViewModel.isVisible {
+                let result = await self.overlayViewModel.requestShow()
+                if result == .shown {
                     log.info("✅ 오버레이 표시 성공")
                     return
                 }
 
-                if overlayViewModel.needsOnboarding {
+                if self.onboardingViewModel.needsOnboarding {
                     log.warning("⚠️ 온보딩 미완료 — 온보딩 창 표시")
                     NSApp.activate(ignoringOtherApps: true)
                     self.bringMainWindowToFront()
-                } else if overlayViewModel.permissionState != .granted {
+                } else if self.onboardingViewModel.permissionState != .granted {
                     // 권한 미허용 → 프롬프트만 띄우고, 허용 후 복귀 시 자동 오버레이
                     log.info("🔒 접근성 권한 미허용 — 권한 프롬프트 표시, 허용 대기")
                     self.pendingOverlayAfterPermission = true
-                    overlayViewModel.requestAccessibilityPermissionPrompt()
+                    self.onboardingViewModel.requestAccessibilityPermissionPrompt()
                 } else {
                     log.warning("⚠️ 오버레이 표시 실패 — fallback: 설정 창 표시")
                     NSApp.activate(ignoringOtherApps: true)
@@ -100,16 +110,14 @@ final class AppContainer {
                 }
             }
         }
-        self.statusBarController.onSettingsClick = { [weak self, weak overlayViewModel] in
+        self.statusBarController.onSettingsClick = { [weak self] in
             guard let self else { return }
             NSApp.activate(ignoringOtherApps: true)
             self.presentSettingsWindow()
-            if self.settingsWindowController == nil {
-                overlayViewModel?.showInfoMessage("Unable to open Settings window.")
-            }
         }
 
-        overlayViewModel.$needsOnboarding
+        onboardingViewModel.$needsOnboarding
+            .dropFirst() // init 중 즉시 방출 무시 → start()에서 수동 호출
             .removeDuplicates()
             .sink { [weak self] needsOnboarding in
                 self?.applyAppPresentation(needsOnboarding: needsOnboarding)
@@ -118,33 +126,48 @@ final class AppContainer {
 
         // 앱 활성화 시 권한 허용 대기 상태면 자동으로 오버레이 표시 시도
         NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
-            .sink { [weak self, weak overlayViewModel] _ in
-                guard let self, let overlayViewModel else { return }
+            .sink { [weak self] _ in
+                guard let self else { return }
                 guard self.pendingOverlayAfterPermission else { return }
-                overlayViewModel.refreshPermissionState()
-                guard overlayViewModel.permissionState == .granted else { return }
+                self.onboardingViewModel.refreshPermissionState()
+                guard self.onboardingViewModel.permissionState == .granted else { return }
                 self.pendingOverlayAfterPermission = false
                 log.info("✅ 권한 허용 확인 — 오버레이 자동 표시")
                 Task { @MainActor in
-                    await overlayViewModel.requestShow()
+                    _ = await self.overlayViewModel.requestShow()
                 }
             }
             .store(in: &cancellables)
     }
 
     func start() {
-        overlayViewModel.refreshPreferences()
+        settingsViewModel.refreshPreferences()
         overlayPanelController.start()
         statusBarController.start()
-        orchestrator.start()
-        applyAppPresentation(needsOnboarding: overlayViewModel.needsOnboarding)
+        orchestrator?.start()
+        applyAppPresentation(needsOnboarding: onboardingViewModel.needsOnboarding)
 
         // WindowGroup can be created after start(); re-apply presentation on next runloop.
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            self.applyAppPresentation(needsOnboarding: self.overlayViewModel.needsOnboarding)
+            self.applyAppPresentation(needsOnboarding: self.onboardingViewModel.needsOnboarding)
         }
     }
+
+    // MARK: - Show Result Routing
+
+    private func handleShowResult(_ result: ShowOverlayForCurrentAppUseCase.Result) {
+        switch result {
+        case .shown, .noCatalog:
+            break
+        case .needsPermission:
+            onboardingViewModel.showInfoMessage("Accessibility permission is required to show shortcuts.")
+        case .noFocusedApp:
+            onboardingViewModel.showInfoMessage("Could not detect the focused application.")
+        }
+    }
+
+    // MARK: - App Presentation
 
     private func applyAppPresentation(needsOnboarding: Bool) {
         if needsOnboarding {
@@ -173,7 +196,9 @@ final class AppContainer {
             return
         }
 
-        let host = NSHostingController(rootView: SettingsWindowView(viewModel: overlayViewModel))
+        let host = NSHostingController(
+            rootView: SettingsWindowView(settingsVM: settingsViewModel, onboardingVM: onboardingViewModel)
+        )
         let window = NSWindow(contentViewController: host)
         window.title = "Settings"
         window.styleMask = NSWindow.StyleMask([.titled, .closable, .miniaturizable])

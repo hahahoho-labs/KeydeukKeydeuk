@@ -7,10 +7,15 @@ struct ContainerHolder {
 
 @main
 struct KeydeukKeydeukApp: App {
-    @StateObject private var viewModel: OverlayViewModel
+    @StateObject private var overlayVM: OverlayViewModel
+    @StateObject private var settingsVM: SettingsViewModel
+    @StateObject private var onboardingVM: OnboardingViewModel
 
     init() {
-        _viewModel = StateObject(wrappedValue: ContainerHolder.shared.overlayViewModel)
+        let container = ContainerHolder.shared
+        _overlayVM = StateObject(wrappedValue: container.overlayViewModel)
+        _settingsVM = StateObject(wrappedValue: container.settingsViewModel)
+        _onboardingVM = StateObject(wrappedValue: container.onboardingViewModel)
         Task { @MainActor in
             ContainerHolder.shared.start()
         }
@@ -18,12 +23,12 @@ struct KeydeukKeydeukApp: App {
 
     var body: some Scene {
         WindowGroup("Onboarding") {
-            AppWindowView(viewModel: viewModel)
+            AppWindowView(onboardingVM: onboardingVM, settingsVM: settingsVM)
                 .frame(minWidth: 720, minHeight: 520)
         }
 
         Settings {
-            SettingsWindowView(viewModel: viewModel)
+            SettingsWindowView(settingsVM: settingsVM, onboardingVM: onboardingVM)
         }
     }
 }

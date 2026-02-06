@@ -3,7 +3,8 @@ import SwiftUI
 // MARK: - General Tab
 
 struct GeneralSettingsTab: View {
-    @ObservedObject var viewModel: OverlayViewModel
+    @ObservedObject var settingsVM: SettingsViewModel
+    @ObservedObject var onboardingVM: OnboardingViewModel
 
     var body: some View {
         ScrollView {
@@ -23,8 +24,8 @@ struct GeneralSettingsTab: View {
             Picker(
                 "Trigger",
                 selection: Binding(
-                    get: { viewModel.selectedTriggerType },
-                    set: { viewModel.setTriggerType($0) }
+                    get: { settingsVM.selectedTriggerType },
+                    set: { settingsVM.setTriggerType($0) }
                 )
             ) {
                 Text("Hold ⌘ Command").tag(Preferences.Trigger.holdCommand)
@@ -32,19 +33,19 @@ struct GeneralSettingsTab: View {
             }
             .pickerStyle(.menu)
 
-            if viewModel.selectedTriggerType == .holdCommand {
+            if settingsVM.selectedTriggerType == .holdCommand {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Hold Duration")
                         Spacer()
-                        Text("\(viewModel.holdDuration, specifier: "%.1f")s")
+                        Text("\(settingsVM.holdDuration, specifier: "%.1f")s")
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                     }
                     Slider(
                         value: Binding(
-                            get: { viewModel.holdDuration },
-                            set: { viewModel.setHoldDuration($0) }
+                            get: { settingsVM.holdDuration },
+                            set: { settingsVM.setHoldDuration($0) }
                         ),
                         in: 0.3...3.0,
                         step: 0.1
@@ -54,11 +55,11 @@ struct GeneralSettingsTab: View {
                 Picker(
                     "Global Hotkey",
                     selection: Binding(
-                        get: { viewModel.selectedHotkeyPresetID },
-                        set: { viewModel.selectHotkeyPreset(id: $0) }
+                        get: { settingsVM.selectedHotkeyPresetID },
+                        set: { settingsVM.selectHotkeyPreset(id: $0) }
                     )
                 ) {
-                    ForEach(viewModel.hotkeyPresets) { preset in
+                    ForEach(settingsVM.hotkeyPresets) { preset in
                         Text(preset.title).tag(preset.id)
                     }
                 }
@@ -74,16 +75,16 @@ struct GeneralSettingsTab: View {
             Toggle(
                 "Hide on ESC",
                 isOn: Binding(
-                    get: { viewModel.autoHideOnEsc },
-                    set: { viewModel.setAutoHideOnEsc($0) }
+                    get: { settingsVM.autoHideOnEsc },
+                    set: { settingsVM.setAutoHideOnEsc($0) }
                 )
             )
 
             Toggle(
                 "Hide on App Switch",
                 isOn: Binding(
-                    get: { viewModel.autoHideOnAppSwitch },
-                    set: { viewModel.setAutoHideOnAppSwitch($0) }
+                    get: { settingsVM.autoHideOnAppSwitch },
+                    set: { settingsVM.setAutoHideOnAppSwitch($0) }
                 )
             )
         }
@@ -99,7 +100,7 @@ struct GeneralSettingsTab: View {
                 permissionBadge
 
                 Button {
-                    viewModel.refreshPermissionState()
+                    onboardingVM.refreshPermissionState()
                 } label: {
                     Image(systemName: "arrow.clockwise")
                         .font(.callout)
@@ -109,16 +110,16 @@ struct GeneralSettingsTab: View {
                 .help("Refresh permission status")
             }
 
-            if viewModel.permissionState != .granted {
+            if onboardingVM.permissionState != .granted {
                 Text("Overlay requires Accessibility permission to read menu shortcuts.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 Button("Open Accessibility Settings") {
-                    viewModel.openAccessibilityPreferences()
+                    onboardingVM.openAccessibilityPreferences()
                 }
 
-                if let hint = viewModel.permissionHint {
+                if let hint = onboardingVM.permissionHint {
                     Text(hint)
                         .font(.caption)
                         .foregroundStyle(.orange)
@@ -129,7 +130,7 @@ struct GeneralSettingsTab: View {
 
     @ViewBuilder
     private var permissionBadge: some View {
-        switch viewModel.permissionState {
+        switch onboardingVM.permissionState {
         case .granted:
             Label("Granted", systemImage: "checkmark.circle.fill")
                 .font(.callout.weight(.medium))
@@ -192,12 +193,10 @@ struct HelpSettingsTab: View {
     }
 }
 
-// MARK: - Reusable Section Container
-
 // MARK: - Onboarding Trigger Settings (simplified for RootView)
 
 struct OnboardingTriggerSettingsView: View {
-    @ObservedObject var viewModel: OverlayViewModel
+    @ObservedObject var viewModel: SettingsViewModel
 
     var body: some View {
         SettingsSection(title: "Trigger Settings") {

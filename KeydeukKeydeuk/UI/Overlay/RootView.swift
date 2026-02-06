@@ -1,41 +1,42 @@
 import SwiftUI
 
 struct RootView: View {
-    @ObservedObject var viewModel: OverlayViewModel
+    @ObservedObject var onboardingVM: OnboardingViewModel
+    @ObservedObject var settingsVM: SettingsViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Welcome to KeydeukKeydeuk")
                 .font(.title2.bold())
 
-            if let permissionHint = viewModel.permissionHint {
+            if let permissionHint = onboardingVM.permissionHint {
                 Text(permissionHint)
                     .font(.callout)
                     .foregroundStyle(.orange)
             }
 
             OnboardingView(
-                permissionState: viewModel.permissionState,
+                permissionState: onboardingVM.permissionState,
                 requestPermissionPrompt: {
-                    viewModel.requestAccessibilityPermissionPrompt()
+                    onboardingVM.requestAccessibilityPermissionPrompt()
                 },
                 openAccessibilitySettings: {
-                    viewModel.openAccessibilityPreferences()
+                    onboardingVM.openAccessibilityPreferences()
                 },
                 refreshPermissionState: {
-                    viewModel.refreshPermissionState()
+                    onboardingVM.refreshPermissionState()
                 }
             )
 
-            OnboardingTriggerSettingsView(viewModel: viewModel)
+            OnboardingTriggerSettingsView(viewModel: settingsVM)
 
             HStack {
                 Spacer()
                 Button("Finish Setup") {
-                    viewModel.completeOnboardingIfPossible()
+                    onboardingVM.completeOnboardingIfPossible()
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(!viewModel.canFinishOnboarding)
+                .disabled(!onboardingVM.canFinishOnboarding)
             }
         }
         .padding(20)
