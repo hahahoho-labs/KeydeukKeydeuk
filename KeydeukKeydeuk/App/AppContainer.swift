@@ -14,6 +14,7 @@ final class AppContainer {
     private let statusBarController: StatusBarController
     private let overlayPanelController: OverlayPanelController
     private var settingsWindowController: NSWindowController?
+    private var pendingOverlayAfterPermission = false
     private var cancellables: Set<AnyCancellable> = []
 
     init() {
@@ -65,6 +66,7 @@ final class AppContainer {
             evaluateActivation: evaluateActivation,
             showOverlay: showOverlay,
             hideOverlay: hideOverlay,
+            preferencesStore: preferencesStore,
             onShowResult: { [weak overlayViewModel] result in
                 overlayViewModel?.handle(showResult: result)
             }
@@ -81,12 +83,19 @@ final class AppContainer {
                     log.info("✅ 오버레이 표시 성공")
                     return
                 }
-                // 오버레이 표시 실패 → 원인에 따라 fallback UI 제공
-                log.warning("⚠️ 오버레이 표시 실패 — fallback UI 진입 (needsOnboarding: \(overlayViewModel.needsOnboarding))")
-                NSApp.activate(ignoringOtherApps: true)
+
                 if overlayViewModel.needsOnboarding {
+                    log.warning("⚠️ 온보딩 미완료 — 온보딩 창 표시")
+                    NSApp.activate(ignoringOtherApps: true)
                     self.bringMainWindowToFront()
+                } else if overlayViewModel.permissionState != .granted {
+                    // 권한 미허용 → 프롬프트만 띄우고, 허용 후 복귀 시 자동 오버레이
+                    log.info("🔒 접근성 권한 미허용 — 권한 프롬프트 표시, 허용 대기")
+                    self.pendingOverlayAfterPermission = true
+                    overlayViewModel.requestAccessibilityPermissionPrompt()
                 } else {
+                    log.warning("⚠️ 오버레이 표시 실패 — fallback: 설정 창 표시")
+                    NSApp.activate(ignoringOtherApps: true)
                     self.presentSettingsWindow()
                 }
             }
@@ -104,6 +113,21 @@ final class AppContainer {
             .removeDuplicates()
             .sink { [weak self] needsOnboarding in
                 self?.applyAppPresentation(needsOnboarding: needsOnboarding)
+            }
+            .store(in: &cancellables)
+
+        // 앱 활성화 시 권한 허용 대기 상태면 자동으로 오버레이 표시 시도
+        NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+            .sink { [weak self, weak overlayViewModel] _ in
+                guard let self, let overlayViewModel else { return }
+                guard self.pendingOverlayAfterPermission else { return }
+                overlayViewModel.refreshPermissionState()
+                guard overlayViewModel.permissionState == .granted else { return }
+                self.pendingOverlayAfterPermission = false
+                log.info("✅ 권한 허용 확인 — 오버레이 자동 표시")
+                Task { @MainActor in
+                    await overlayViewModel.requestShow()
+                }
             }
             .store(in: &cancellables)
     }
@@ -151,9 +175,9 @@ final class AppContainer {
 
         let host = NSHostingController(rootView: SettingsWindowView(viewModel: overlayViewModel))
         let window = NSWindow(contentViewController: host)
-        window.title = "KeydeukKeydeuk Settings"
+        window.title = "Settings"
         window.styleMask = NSWindow.StyleMask([.titled, .closable, .miniaturizable])
-        window.setContentSize(NSSize(width: 560, height: 320))
+        window.setContentSize(NSSize(width: 620, height: 480))
         window.center()
         let controller = NSWindowController(window: window)
         controller.showWindow(nil)

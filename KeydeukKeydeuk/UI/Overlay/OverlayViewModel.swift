@@ -72,6 +72,9 @@ final class OverlayViewModel: ObservableObject {
     var autoHideOnAppSwitch: Bool { preferences.autoHideOnAppSwitch }
     var canFinishOnboarding: Bool { permissionState == .granted }
 
+    var selectedTriggerType: Preferences.Trigger { preferences.trigger }
+    var holdDuration: Double { preferences.holdDurationSeconds }
+
     var selectedHotkeyPresetID: String {
         hotkeyPresets.first {
             $0.keyCode == preferences.hotkeyKeyCode && $0.modifiers == preferences.hotkeyModifiers
@@ -115,8 +118,7 @@ final class OverlayViewModel: ObservableObject {
             permissionHint = nil
             return
         }
-        permissionHint = "Permission request sent. If no prompt appears, open Accessibility Settings and add this app manually."
-        openAccessibilityPreferences()
+        permissionHint = "Permission request sent. If no prompt appears, click 'Open System Settings' to add this app manually."
     }
 
     func openAccessibilityPreferences() {
@@ -171,6 +173,18 @@ final class OverlayViewModel: ObservableObject {
     func setAutoHideOnAppSwitch(_ isOn: Bool) {
         updatePreferences { current in
             current.autoHideOnAppSwitch = isOn
+        }
+    }
+
+    func setTriggerType(_ type: Preferences.Trigger) {
+        updatePreferences { current in
+            current.trigger = type
+        }
+    }
+
+    func setHoldDuration(_ duration: Double) {
+        updatePreferences { current in
+            current.holdDurationSeconds = duration
         }
     }
 
