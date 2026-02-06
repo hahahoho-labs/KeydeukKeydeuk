@@ -2,6 +2,7 @@ import SwiftUI
 
 struct OnboardingView: View {
     let permissionState: PermissionState
+    let requestPermissionPrompt: () -> Void
     let openAccessibilitySettings: () -> Void
     let refreshPermissionState: () -> Void
 
@@ -26,10 +27,15 @@ struct OnboardingView: View {
                 .font(.callout.weight(.semibold))
 
             HStack(spacing: 8) {
+                Button("Request Permission") {
+                    requestPermissionPrompt()
+                }
+                .buttonStyle(.borderedProminent)
+
                 Button("Open Accessibility Settings") {
                     openAccessibilitySettings()
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.bordered)
 
                 Button("Refresh Status") {
                     refreshPermissionState()

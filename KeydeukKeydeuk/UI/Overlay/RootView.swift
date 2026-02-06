@@ -16,6 +16,9 @@ struct RootView: View {
 
             OnboardingView(
                 permissionState: viewModel.permissionState,
+                requestPermissionPrompt: {
+                    viewModel.requestAccessibilityPermissionPrompt()
+                },
                 openAccessibilitySettings: {
                     viewModel.openAccessibilityPreferences()
                 },
@@ -32,6 +35,7 @@ struct RootView: View {
                     viewModel.completeOnboardingIfPossible()
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(!viewModel.canFinishOnboarding)
             }
         }
         .padding(20)

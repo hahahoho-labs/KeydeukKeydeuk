@@ -31,6 +31,7 @@ final class AppContainer {
         let loadShortcuts = LoadShortcutsForAppUseCase(repository: shortcutRepository)
         let loadPreferences = LoadPreferencesUseCase(preferencesStore: preferencesStore)
         let getAccessibilityPermissionState = GetAccessibilityPermissionStateUseCase(permissionChecker: permissionChecker)
+        let requestAccessibilityPermission = RequestAccessibilityPermissionUseCase(permissionGuide: permissionGuide)
         let showOverlay = ShowOverlayForCurrentAppUseCase(
             permissionChecker: permissionChecker,
             appContextProvider: appContextProvider,
@@ -45,6 +46,7 @@ final class AppContainer {
             state: overlayState,
             loadPreferences: loadPreferences,
             getAccessibilityPermissionState: getAccessibilityPermissionState,
+            requestAccessibilityPermission: requestAccessibilityPermission,
             showOverlay: showOverlay,
             hideOverlay: hideOverlay,
             updatePreferencesUseCase: updatePreferences,

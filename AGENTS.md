@@ -60,7 +60,7 @@ KeydeukKeydeuk/
 - Domain
   - Entity/Value Object, 정책(Policy), 포트(Protocol)
 - Application
-  - 유스케이스(EvaluateActivation, Show/Hide Overlay, LoadShortcuts, LoadPreferences, UpdatePreferences, OpenAccessibilitySettings, GetAccessibilityPermissionState)
+  - 유스케이스(EvaluateActivation, Show/Hide Overlay, LoadShortcuts, LoadPreferences, UpdatePreferences, OpenAccessibilitySettings, GetAccessibilityPermissionState, RequestAccessibilityPermission)
 - Data
   - 저장소/설정 저장 구현(JSON, UserDefaults)
 - Platform
@@ -133,6 +133,7 @@ sequenceDiagram
   participant VM as OverlayViewModel
   participant LP as UseCase.LoadPreferences
   participant GP as UseCase.GetAccessibilityPermissionState
+  participant RP as UseCase.RequestAccessibilityPermission
   participant UP as UseCase.UpdatePreferences
   participant OA as UseCase.OpenAccessibilitySettings
   participant PS as PreferencesStore
@@ -149,6 +150,10 @@ sequenceDiagram
   VM->>UP: execute(updatedPreferences)
   UP->>PS: save(...)
   PS-->>VM: 저장 완료
+
+  UI->>VM: 권한 요청 버튼 탭
+  VM->>RP: execute()
+  VM->>GP: 권한 상태 재확인
 
   UI->>VM: 접근성 설정 열기 버튼 탭
   VM->>OA: execute()
@@ -178,6 +183,8 @@ sequenceDiagram
 - 접근성 권한 상태 확인
 - 권한 온보딩에서 시스템 접근성 설정 열기 버튼 제공
 - 권한 요청 프롬프트 트리거(AX prompt) + 상태 재확인
+- 권한 미획득 시 Finish Setup 버튼 비활성화
+- 권한 요청 후 프롬프트가 보이지 않으면 접근성 설정 화면으로 자동 유도
 - 글로벌 핫키 기반 트리거
 - 현재 활성 앱 감지
 - 오버레이 표시/숨김

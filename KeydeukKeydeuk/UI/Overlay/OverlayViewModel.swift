@@ -19,6 +19,7 @@ final class OverlayViewModel: ObservableObject {
     private let state: OverlaySceneState
     private let loadPreferences: LoadPreferencesUseCase
     private let getAccessibilityPermissionState: GetAccessibilityPermissionStateUseCase
+    private let requestAccessibilityPermission: RequestAccessibilityPermissionUseCase
     private let showOverlay: ShowOverlayForCurrentAppUseCase
     private let hideOverlay: HideOverlayUseCase
     private let updatePreferencesUseCase: UpdatePreferencesUseCase
@@ -34,6 +35,7 @@ final class OverlayViewModel: ObservableObject {
         state: OverlaySceneState,
         loadPreferences: LoadPreferencesUseCase,
         getAccessibilityPermissionState: GetAccessibilityPermissionStateUseCase,
+        requestAccessibilityPermission: RequestAccessibilityPermissionUseCase,
         showOverlay: ShowOverlayForCurrentAppUseCase,
         hideOverlay: HideOverlayUseCase,
         updatePreferencesUseCase: UpdatePreferencesUseCase,
@@ -42,6 +44,7 @@ final class OverlayViewModel: ObservableObject {
         self.state = state
         self.loadPreferences = loadPreferences
         self.getAccessibilityPermissionState = getAccessibilityPermissionState
+        self.requestAccessibilityPermission = requestAccessibilityPermission
         self.showOverlay = showOverlay
         self.hideOverlay = hideOverlay
         self.updatePreferencesUseCase = updatePreferencesUseCase
@@ -57,6 +60,7 @@ final class OverlayViewModel: ObservableObject {
     var appName: String { state.appName }
     var autoHideOnEsc: Bool { preferences.autoHideOnEsc }
     var autoHideOnAppSwitch: Bool { preferences.autoHideOnAppSwitch }
+    var canFinishOnboarding: Bool { permissionState == .granted }
 
     var selectedHotkeyPresetID: String {
         hotkeyPresets.first {
@@ -94,6 +98,17 @@ final class OverlayViewModel: ObservableObject {
         hideOverlay.execute()
     }
 
+    func requestAccessibilityPermissionPrompt() {
+        let isGranted = requestAccessibilityPermission.execute()
+        refreshPermissionState()
+        if isGranted || permissionState == .granted {
+            permissionHint = nil
+            return
+        }
+        permissionHint = "Permission request sent. If no prompt appears, open Accessibility Settings and add this app manually."
+        openAccessibilityPreferences()
+    }
+
     func openAccessibilityPreferences() {
         openAccessibilitySettings.execute()
     }
@@ -104,7 +119,7 @@ final class OverlayViewModel: ObservableObject {
 
     func completeOnboardingIfPossible() {
         refreshPermissionState()
-        guard permissionState == .granted else {
+        guard canFinishOnboarding else {
             permissionHint = "Please grant Accessibility permission to finish onboarding."
             return
         }

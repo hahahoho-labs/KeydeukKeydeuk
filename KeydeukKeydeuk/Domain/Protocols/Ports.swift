@@ -11,6 +11,7 @@ protocol PermissionChecker {
 }
 
 protocol PermissionGuide {
+    func requestAccessibilityPermissionPrompt() -> Bool
     func openAccessibilitySettings()
 }
 
