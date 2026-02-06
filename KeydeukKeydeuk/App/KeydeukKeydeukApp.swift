@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ContainerHolder {
@@ -6,18 +7,34 @@ struct ContainerHolder {
 
 @main
 struct KeydeukKeydeukApp: App {
-    @State private var hasStarted = false
-    @State private var container = ContainerHolder.shared
+    @StateObject private var viewModel: OverlayViewModel
+
+    init() {
+        _viewModel = StateObject(wrappedValue: ContainerHolder.shared.overlayViewModel)
+        Task { @MainActor in
+            ContainerHolder.shared.start()
+        }
+    }
 
     var body: some Scene {
-        WindowGroup {
-            RootView(viewModel: container.overlayViewModel)
-                .frame(minWidth: 720, minHeight: 520)
-                .onAppear {
-                    guard !hasStarted else { return }
-                    hasStarted = true
-                    container.start()
+        WindowGroup("Onboarding") {
+            Group {
+                if viewModel.needsOnboarding {
+                    RootView(viewModel: viewModel)
+                        .frame(minWidth: 720, minHeight: 520)
+                } else {
+                    Color.clear
+                        .frame(width: 1, height: 1)
+                        .onAppear {
+                            NSApp.windows.forEach { $0.close() }
+                        }
                 }
+            }
+        }
+
+        Settings {
+            Text("Settings window is not implemented yet.")
+                .padding(20)
         }
     }
 }

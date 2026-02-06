@@ -10,6 +10,10 @@ protocol PermissionChecker {
     func state(for requirement: PermissionRequirement) -> PermissionState
 }
 
+protocol PermissionGuide {
+    func openAccessibilitySettings()
+}
+
 protocol PreferencesStore {
     func load() -> Preferences
     func save(_ preferences: Preferences) throws

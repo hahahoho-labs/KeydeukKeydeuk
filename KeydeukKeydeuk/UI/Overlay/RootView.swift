@@ -4,18 +4,9 @@ struct RootView: View {
     @ObservedObject var viewModel: OverlayViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("KeydeukKeydeuk MVP")
-                    .font(.title2.bold())
-                Spacer()
-                Button("Show Overlay") {
-                    Task { await viewModel.requestShow() }
-                }
-                Button("Hide") {
-                    viewModel.requestHide()
-                }
-            }
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Welcome to KeydeukKeydeuk")
+                .font(.title2.bold())
 
             if let permissionHint = viewModel.permissionHint {
                 Text(permissionHint)
@@ -23,10 +14,24 @@ struct RootView: View {
                     .foregroundStyle(.orange)
             }
 
-            if viewModel.isVisible {
-                OverlayView(viewModel: viewModel)
-            } else {
-                OnboardingView()
+            OnboardingView(
+                permissionState: viewModel.permissionState,
+                openAccessibilitySettings: {
+                    viewModel.openAccessibilityPreferences()
+                },
+                refreshPermissionState: {
+                    viewModel.refreshPermissionState()
+                }
+            )
+
+            SettingsView(viewModel: viewModel)
+
+            HStack {
+                Spacer()
+                Button("Finish Setup") {
+                    viewModel.completeOnboardingIfPossible()
+                }
+                .buttonStyle(.borderedProminent)
             }
         }
         .padding(20)

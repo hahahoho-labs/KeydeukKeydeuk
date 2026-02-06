@@ -3,28 +3,66 @@ import Foundation
 
 @MainActor
 final class OverlayViewModel: ObservableObject {
+    struct HotkeyPreset: Identifiable, Equatable {
+        let id: String
+        let title: String
+        let keyCode: Int
+        let modifiers: KeyModifiers
+    }
+
     @Published var query = ""
     @Published private(set) var permissionHint: String?
+    @Published private(set) var preferences: Preferences
+    @Published private(set) var permissionState: PermissionState
+    @Published private(set) var needsOnboarding: Bool
 
     private let state: OverlaySceneState
+    private let loadPreferences: LoadPreferencesUseCase
+    private let getAccessibilityPermissionState: GetAccessibilityPermissionStateUseCase
     private let showOverlay: ShowOverlayForCurrentAppUseCase
     private let hideOverlay: HideOverlayUseCase
-    private let updatePreferences: UpdatePreferencesUseCase
+    private let updatePreferencesUseCase: UpdatePreferencesUseCase
+    private let openAccessibilitySettings: OpenAccessibilitySettingsUseCase
+
+    let hotkeyPresets: [HotkeyPreset] = [
+        HotkeyPreset(id: "cmd-shift-k", title: "Command + Shift + K", keyCode: 40, modifiers: [.command, .shift]),
+        HotkeyPreset(id: "cmd-shift-l", title: "Command + Shift + L", keyCode: 37, modifiers: [.command, .shift]),
+        HotkeyPreset(id: "cmd-shift-j", title: "Command + Shift + J", keyCode: 38, modifiers: [.command, .shift])
+    ]
 
     init(
         state: OverlaySceneState,
+        loadPreferences: LoadPreferencesUseCase,
+        getAccessibilityPermissionState: GetAccessibilityPermissionStateUseCase,
         showOverlay: ShowOverlayForCurrentAppUseCase,
         hideOverlay: HideOverlayUseCase,
-        updatePreferences: UpdatePreferencesUseCase
+        updatePreferencesUseCase: UpdatePreferencesUseCase,
+        openAccessibilitySettings: OpenAccessibilitySettingsUseCase
     ) {
         self.state = state
+        self.loadPreferences = loadPreferences
+        self.getAccessibilityPermissionState = getAccessibilityPermissionState
         self.showOverlay = showOverlay
         self.hideOverlay = hideOverlay
-        self.updatePreferences = updatePreferences
+        self.updatePreferencesUseCase = updatePreferencesUseCase
+        self.openAccessibilitySettings = openAccessibilitySettings
+
+        let initialPreferences = loadPreferences.execute()
+        self.preferences = initialPreferences
+        self.permissionState = getAccessibilityPermissionState.execute()
+        self.needsOnboarding = !initialPreferences.hasCompletedOnboarding
     }
 
     var isVisible: Bool { state.isVisible }
     var appName: String { state.appName }
+    var autoHideOnEsc: Bool { preferences.autoHideOnEsc }
+    var autoHideOnAppSwitch: Bool { preferences.autoHideOnAppSwitch }
+
+    var selectedHotkeyPresetID: String {
+        hotkeyPresets.first {
+            $0.keyCode == preferences.hotkeyKeyCode && $0.modifiers == preferences.hotkeyModifiers
+        }?.id ?? hotkeyPresets[0].id
+    }
 
     var filteredShortcuts: [Shortcut] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -37,6 +75,16 @@ final class OverlayViewModel: ObservableObject {
         }
     }
 
+    func refreshPreferences() {
+        preferences = loadPreferences.execute()
+        needsOnboarding = !preferences.hasCompletedOnboarding
+        refreshPermissionState()
+    }
+
+    func refreshPermissionState() {
+        permissionState = getAccessibilityPermissionState.execute()
+    }
+
     func requestShow() async {
         let result = await showOverlay.execute()
         handle(showResult: result)
@@ -44,6 +92,28 @@ final class OverlayViewModel: ObservableObject {
 
     func requestHide() {
         hideOverlay.execute()
+    }
+
+    func openAccessibilityPreferences() {
+        openAccessibilitySettings.execute()
+    }
+
+    func showInfoMessage(_ message: String) {
+        permissionHint = message
+    }
+
+    func completeOnboardingIfPossible() {
+        refreshPermissionState()
+        guard permissionState == .granted else {
+            permissionHint = "Please grant Accessibility permission to finish onboarding."
+            return
+        }
+
+        updatePreferences { current in
+            current.hasCompletedOnboarding = true
+        }
+        needsOnboarding = false
+        permissionHint = nil
     }
 
     func handle(showResult: ShowOverlayForCurrentAppUseCase.Result) {
@@ -59,10 +129,34 @@ final class OverlayViewModel: ObservableObject {
         }
     }
 
-    func updateHotkey(keyCode: Int, modifiers: KeyModifiers) {
-        var current = Preferences.default
-        current.hotkeyKeyCode = keyCode
-        current.hotkeyModifiersRawValue = modifiers.rawValue
-        try? updatePreferences.execute(current)
+    func selectHotkeyPreset(id: String) {
+        guard let preset = hotkeyPresets.first(where: { $0.id == id }) else { return }
+        updatePreferences { current in
+            current.hotkeyKeyCode = preset.keyCode
+            current.hotkeyModifiersRawValue = preset.modifiers.rawValue
+        }
+    }
+
+    func setAutoHideOnEsc(_ isOn: Bool) {
+        updatePreferences { current in
+            current.autoHideOnEsc = isOn
+        }
+    }
+
+    func setAutoHideOnAppSwitch(_ isOn: Bool) {
+        updatePreferences { current in
+            current.autoHideOnAppSwitch = isOn
+        }
+    }
+
+    private func updatePreferences(_ mutate: (inout Preferences) -> Void) {
+        var next = preferences
+        mutate(&next)
+        do {
+            try updatePreferencesUseCase.execute(next)
+            preferences = next
+        } catch {
+            // Keep in-memory state unchanged on persistence failure.
+        }
     }
 }
