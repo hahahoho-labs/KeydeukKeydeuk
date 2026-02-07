@@ -6,12 +6,19 @@ struct Preferences: Codable, Equatable {
         case globalHotkey
     }
 
+    enum ThemeMode: String, Codable, CaseIterable {
+        case system
+        case light
+        case dark
+    }
+
     var trigger: Trigger
     var hotkeyKeyCode: Int
     var hotkeyModifiersRawValue: Int
     var holdDurationSeconds: Double
     var autoHideOnAppSwitch: Bool
     var autoHideOnEsc: Bool
+    var themeMode: ThemeMode
     var hasCompletedOnboarding: Bool
 
     var hotkeyModifiers: KeyModifiers {
@@ -25,6 +32,7 @@ struct Preferences: Codable, Equatable {
         holdDurationSeconds: Double,
         autoHideOnAppSwitch: Bool,
         autoHideOnEsc: Bool,
+        themeMode: ThemeMode,
         hasCompletedOnboarding: Bool
     ) {
         self.trigger = trigger
@@ -33,6 +41,7 @@ struct Preferences: Codable, Equatable {
         self.holdDurationSeconds = holdDurationSeconds
         self.autoHideOnAppSwitch = autoHideOnAppSwitch
         self.autoHideOnEsc = autoHideOnEsc
+        self.themeMode = themeMode
         self.hasCompletedOnboarding = hasCompletedOnboarding
     }
 
@@ -43,6 +52,7 @@ struct Preferences: Codable, Equatable {
         holdDurationSeconds: 1.0,
         autoHideOnAppSwitch: true,
         autoHideOnEsc: true,
+        themeMode: .system,
         hasCompletedOnboarding: false
     )
 
@@ -53,6 +63,7 @@ struct Preferences: Codable, Equatable {
         case holdDurationSeconds
         case autoHideOnAppSwitch
         case autoHideOnEsc
+        case themeMode
         case hasCompletedOnboarding
     }
 
@@ -66,6 +77,7 @@ struct Preferences: Codable, Equatable {
         holdDurationSeconds = try container.decodeIfPresent(Double.self, forKey: .holdDurationSeconds) ?? defaults.holdDurationSeconds
         autoHideOnAppSwitch = try container.decodeIfPresent(Bool.self, forKey: .autoHideOnAppSwitch) ?? defaults.autoHideOnAppSwitch
         autoHideOnEsc = try container.decodeIfPresent(Bool.self, forKey: .autoHideOnEsc) ?? defaults.autoHideOnEsc
+        themeMode = try container.decodeIfPresent(ThemeMode.self, forKey: .themeMode) ?? defaults.themeMode
         hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? defaults.hasCompletedOnboarding
     }
 }

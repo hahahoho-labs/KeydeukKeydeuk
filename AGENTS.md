@@ -16,7 +16,7 @@ KeydeukKeydeuk는 macOS용 단축키 치트시트(오버레이) MVP 프로젝트
 3. 기본 트리거: ⌘ Command 키 1초 이상 홀드 → 오버레이 표시 (트리거 전용, 떼도 유지)
 4. 대안 트리거: 글로벌 핫키 조합(⌘⇧K 등) 토글 방식 지원
 5. StatusBar 아이콘 좌클릭 시 오버레이 표시, 우클릭 시 메뉴 드롭다운
-6. Settings 메뉴에서 탭 기반 설정 창(General/Theme/Help)을 열어 트리거·동작·권한 설정 변경
+6. Settings 메뉴에서 탭 기반 설정 창(General/Theme/Help)을 열어 트리거·동작·권한·테마 설정 변경
 
 ## 아키텍처 원칙
 - Domain은 정책/규칙만 가진다.
@@ -40,7 +40,7 @@ KeydeukKeydeuk/
       Activation.swift          # KeyModifiers, KeyEvent, ActivationDecision
       AppContext.swift           # 앱 컨텍스트 (bundleID, appName)
       Permission.swift           # PermissionState, PermissionRequirement
-      Preferences.swift          # 사용자 설정 (트리거, 핫키, 동작, 온보딩)
+      Preferences.swift          # 사용자 설정 (트리거, 핫키, 동작, 테마, 온보딩)
       Shortcut.swift             # 단축키 항목
       ShortcutCatalog.swift      # 앱별 단축키 카탈로그
     Policies/
@@ -92,6 +92,8 @@ KeydeukKeydeuk/
       SettingsView.swift            # General/Theme/Help 탭 + 공용 섹션 컴포넌트
       SettingsViewModel.swift       # 트리거/핫키/동작 설정 관리
       SettingsWindowView.swift      # 탭 기반 설정 창 컨테이너
+    Theme/
+      AppTheme.swift                # ThemeMode 적용 + 컬러 팔레트 토큰 관리
 ```
 
 ## 레이어 책임
@@ -112,7 +114,7 @@ KeydeukKeydeuk/
   - SwiftUI View + ViewModel(MVVM)
   - ViewModel 3개 (SRP 기반 액터별 분리):
     - OverlayViewModel: 오버레이 표시/숨김, 단축키 검색/필터링
-    - SettingsViewModel: 트리거/핫키/동작 설정 변경 및 저장
+    - SettingsViewModel: 트리거/핫키/동작/테마 설정 변경 및 저장
     - OnboardingViewModel: 권한 상태 관리, 온보딩 완료 흐름
 
 ## 정적 의존성(컴파일 타임)
@@ -268,20 +270,23 @@ sequenceDiagram
 - 오버레이 표시/숨김 (NSPanel 기반 전체 화면 딤 + 멀티 컬럼 KeyCue 스타일 그리드)
 - 검색 가능한 단축키 리스트 표시
 - 핫키 프리셋/자동숨김 토글/트리거 타입/홀드 시간 설정 저장(UserDefaults)
+- **테마 설정**: System/Light/Dark 저장 및 앱 전역(온보딩/설정/오버레이) 적용
+- **테마 팔레트 중앙화**: `UI/Theme/AppTheme.swift`에서 overlay/settings 컬러 토큰 관리
 - 온보딩 완료 후 StatusBar 중심 동작(좌클릭 트리거, 우클릭 메뉴)
 - 온보딩 완료 후 메인 창은 숨김(orderOut) 처리
 - 오버레이 상단에 현재 포커스 앱 이름/아이콘/번들ID를 표시
 - 현재 앱 카탈로그가 없더라도 빈 오버레이를 표시하고, "No shortcuts yet" 안내
 - **설정 창: 탭 기반 레이아웃 (General / Theme / Help)**
   - General: Activation(트리거 타입·홀드 시간·핫키 프리셋), Behavior(자동숨김), Permissions(상태 뱃지·리프레시·설정 열기)
-  - Theme / Help: placeholder (미구현)
+  - Theme: System/Light/Dark 선택, 즉시 적용
+  - Help: placeholder (미구현)
   - 하단: Quit / Cancel / OK 버튼 바
   - 설정 저장 실패 시 인라인 에러 배너 표시
 - **에러 핸들링**: os.Logger 진단 로그 + 인라인 UI 피드백 + graceful degradation
 - **ViewModel SRP**: OverlayViewModel / SettingsViewModel / OnboardingViewModel 분리
 
 ## 확장 포인트
-- Theme 탭 구현 (오버레이 외형/색상/레이아웃 커스터마이즈)
+- Theme 탭 확장 (커스텀 팔레트/타이포/레이아웃 프리셋)
 - Help 탭 구현 (사용 가이드, FAQ, 버전 정보)
 - Overlay를 실제 NSWindow 레벨/포지션 제어로 확장
 - BillingService 구현(StoreKit 결제/구독)
@@ -299,3 +304,4 @@ sequenceDiagram
 - 신규 기능 추가 시 먼저 Domain Port를 정의하고, 이후 Platform/Data에서 구현하기
 - 에러를 삼키지(swallow) 않기 — 최소한 os.Logger로 진단 로그 남기기
 - ViewModel은 액터(사용자 역할)별로 분리하여 SRP 유지하기
+- 전역 테마 전달이 필요할 때는 SettingsViewModel 전체를 넘기기보다 Theme 전용 읽기 모델/값 객체를 우선 검토하기

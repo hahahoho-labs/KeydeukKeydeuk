@@ -2,10 +2,13 @@ import SwiftUI
 
 struct OverlayPanelView: View {
     @ObservedObject var viewModel: OverlayViewModel
+    @ObservedObject var themeModeStore: ThemeModeStore
+    @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
 
     var body: some View {
+        let palette = ThemePalette.resolved(for: appEffectiveColorScheme)
         ZStack {
-            Color.black.opacity(0.55)
+            palette.overlayBackdrop
                 .ignoresSafeArea()
                 .onTapGesture {
                     viewModel.requestHide()
@@ -18,5 +21,6 @@ struct OverlayPanelView: View {
         .onExitCommand {
             viewModel.requestHide()
         }
+        .applyThemeMode(themeModeStore.selectedThemeMode)
     }
 }

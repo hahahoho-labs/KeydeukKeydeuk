@@ -11,6 +11,7 @@ final class AppContainer {
     let overlayViewModel: OverlayViewModel
     let settingsViewModel: SettingsViewModel
     let onboardingViewModel: OnboardingViewModel
+    let themeModeStore: ThemeModeStore
 
     private var orchestrator: AppOrchestrator?
     private let statusBarController: StatusBarController
@@ -61,6 +62,7 @@ final class AppContainer {
             loadPreferences: loadPreferences,
             updatePreferences: updatePreferences
         )
+        self.themeModeStore = ThemeModeStore(initialMode: settingsViewModel.selectedThemeMode)
 
         self.onboardingViewModel = OnboardingViewModel(
             loadPreferences: loadPreferences,
@@ -70,7 +72,11 @@ final class AppContainer {
             updatePreferences: updatePreferences
         )
 
-        self.overlayPanelController = OverlayPanelController(state: overlayState, viewModel: overlayViewModel)
+        self.overlayPanelController = OverlayPanelController(
+            state: overlayState,
+            viewModel: overlayViewModel,
+            themeModeStore: themeModeStore
+        )
         self.statusBarController = StatusBarController()
 
         self.orchestrator = AppOrchestrator(
@@ -89,6 +95,7 @@ final class AppContainer {
             .dropFirst() // 초기값은 이미 initialPreferences로 전달됨
             .sink { [weak self] prefs in
                 self?.orchestrator?.updatePreferences(prefs)
+                self?.themeModeStore.update(mode: prefs.themeMode)
             }
             .store(in: &cancellables)
         self.statusBarController.onPrimaryClick = { [weak self] in
@@ -204,7 +211,11 @@ final class AppContainer {
         }
 
         let host = NSHostingController(
-            rootView: SettingsWindowView(settingsVM: settingsViewModel, onboardingVM: onboardingViewModel)
+            rootView: SettingsWindowView(
+                settingsVM: settingsViewModel,
+                onboardingVM: onboardingViewModel,
+                themeModeStore: themeModeStore
+            )
         )
         let window = NSWindow(contentViewController: host)
         window.title = "Settings"

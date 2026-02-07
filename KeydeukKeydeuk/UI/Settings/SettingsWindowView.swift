@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsWindowView: View {
     @ObservedObject var settingsVM: SettingsViewModel
     @ObservedObject var onboardingVM: OnboardingViewModel
+    @ObservedObject var themeModeStore: ThemeModeStore
     @State private var selectedTab: SettingsTab = .general
 
     enum SettingsTab: String, CaseIterable {
@@ -37,6 +38,7 @@ struct SettingsWindowView: View {
             bottomBar
         }
         .frame(minWidth: 600, minHeight: 440)
+        .applyThemeMode(themeModeStore.selectedThemeMode)
         .onAppear {
             onboardingVM.refreshPermissionState()
         }
@@ -70,6 +72,7 @@ struct SettingsWindowView: View {
             }
             .foregroundStyle(selectedTab == tab ? .primary : .secondary)
             .frame(width: 72, height: 44)
+            .contentShape(Rectangle())
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(selectedTab == tab ? Color.accentColor.opacity(0.12) : Color.clear)
@@ -86,7 +89,7 @@ struct SettingsWindowView: View {
         case .general:
             GeneralSettingsTab(settingsVM: settingsVM, onboardingVM: onboardingVM)
         case .theme:
-            ThemeSettingsTab()
+            ThemeSettingsTab(settingsVM: settingsVM)
         case .help:
             HelpSettingsTab()
         }

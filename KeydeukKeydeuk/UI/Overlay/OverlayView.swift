@@ -13,6 +13,7 @@ private struct ShortcutGroup: Identifiable {
 
 struct OverlayView: View {
     @ObservedObject var viewModel: OverlayViewModel
+    @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
 
     private var groupedShortcuts: [ShortcutGroup] {
         let shortcuts = viewModel.filteredShortcuts
@@ -23,6 +24,7 @@ struct OverlayView: View {
     }
 
     var body: some View {
+        let palette = ThemePalette.resolved(for: appEffectiveColorScheme)
         VStack(spacing: 0) {
             headerBar
 
@@ -38,10 +40,13 @@ struct OverlayView: View {
 
             modifierLegend
         }
-        .background(.ultraThinMaterial)
-        .environment(\.colorScheme, .dark)
+        .background(palette.overlayPanelBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(palette.overlayPanelBorder, lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .shadow(color: .black.opacity(0.5), radius: 40, y: 10)
+        .shadow(color: palette.overlayShadow, radius: 40, y: 10)
     }
 
     // MARK: - Header
@@ -78,7 +83,8 @@ struct OverlayView: View {
     }
 
     private var searchField: some View {
-        HStack(spacing: 6) {
+        let palette = ThemePalette.resolved(for: appEffectiveColorScheme)
+        return HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -88,7 +94,7 @@ struct OverlayView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(.white.opacity(0.07))
+        .background(palette.overlaySearchBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .frame(maxWidth: 220)
     }
@@ -212,8 +218,10 @@ struct OverlayView: View {
 private struct ShortcutRowView: View {
     let shortcut: Shortcut
     @State private var isHovered = false
+    @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
 
     var body: some View {
+        let palette = ThemePalette.resolved(for: appEffectiveColorScheme)
         HStack(spacing: 8) {
             Text(shortcut.title)
                 .font(.callout)
@@ -231,7 +239,7 @@ private struct ShortcutRowView: View {
         .padding(.horizontal, 6)
         .background(
             RoundedRectangle(cornerRadius: 4, style: .continuous)
-                .fill(.white.opacity(isHovered ? 0.08 : 0.03))
+                .fill(isHovered ? palette.overlayRowHoverBackground : palette.overlayRowBackground)
         )
         .onHover { hovering in
             isHovered = hovering

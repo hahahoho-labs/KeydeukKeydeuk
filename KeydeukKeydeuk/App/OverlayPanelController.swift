@@ -14,13 +14,15 @@ final class OverlayPanelController {
 
     private let state: OverlaySceneState
     private let viewModel: OverlayViewModel
+    private let themeModeStore: ThemeModeStore
 
     private var panel: NSPanel?
     private var cancellables: Set<AnyCancellable> = []
 
-    init(state: OverlaySceneState, viewModel: OverlayViewModel) {
+    init(state: OverlaySceneState, viewModel: OverlayViewModel, themeModeStore: ThemeModeStore) {
         self.state = state
         self.viewModel = viewModel
+        self.themeModeStore = themeModeStore
     }
 
     func start() {
@@ -71,7 +73,9 @@ final class OverlayPanelController {
             return panel
         }
 
-        let hostingController = NSHostingController(rootView: OverlayPanelView(viewModel: viewModel))
+        let hostingController = NSHostingController(
+            rootView: OverlayPanelView(viewModel: viewModel, themeModeStore: themeModeStore)
+        )
         let panel = OverlayPanel(
             contentRect: NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1280, height: 720),
             styleMask: [.borderless, .fullSizeContentView, .nonactivatingPanel],

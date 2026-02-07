@@ -5,6 +5,7 @@ import SwiftUI
 struct GeneralSettingsTab: View {
     @ObservedObject var settingsVM: SettingsViewModel
     @ObservedObject var onboardingVM: OnboardingViewModel
+    @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
 
     var body: some View {
         ScrollView {
@@ -23,7 +24,8 @@ struct GeneralSettingsTab: View {
     // MARK: - Error Banner
 
     private func errorBanner(_ message: String) -> some View {
-        HStack(spacing: 8) {
+        let palette = ThemePalette.resolved(for: appEffectiveColorScheme)
+        return HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.yellow)
             Text(message)
@@ -38,7 +40,7 @@ struct GeneralSettingsTab: View {
             .buttonStyle(.plain)
         }
         .padding(12)
-        .background(Color.red.opacity(0.1))
+        .background(palette.settingsErrorBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
@@ -175,23 +177,55 @@ struct GeneralSettingsTab: View {
 // MARK: - Theme Tab (Placeholder)
 
 struct ThemeSettingsTab: View {
+    @ObservedObject var settingsVM: SettingsViewModel
+
     var body: some View {
-        VStack {
-            Spacer()
-            VStack(spacing: 8) {
-                Image(systemName: "paintbrush")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.secondary)
-                Text("Theme settings coming soon")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                Text("Customize overlay appearance, colors, and layout.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                SettingsSection(title: "Appearance") {
+                    Text("Apply a single theme choice across onboarding, settings, and overlay.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+
+                    VStack(spacing: 10) {
+                        ForEach(Preferences.ThemeMode.allCases, id: \.self) { mode in
+                            ThemeModeRow(
+                                mode: mode,
+                                isSelected: settingsVM.selectedThemeMode == mode,
+                                select: { settingsVM.setThemeMode(mode) }
+                            )
+                        }
+                    }
+                }
             }
-            Spacer()
+            .padding(20)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct ThemeModeRow: View {
+    let mode: Preferences.ThemeMode
+    let isSelected: Bool
+    let select: () -> Void
+
+    var body: some View {
+        Button(action: select) {
+            HStack(spacing: 10) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(ThemeModeText.title(for: mode))
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(.primary)
+                    Text(ThemeModeText.description(for: mode))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -278,8 +312,10 @@ struct OnboardingTriggerSettingsView: View {
 struct SettingsSection<Content: View>: View {
     let title: String
     @ViewBuilder let content: () -> Content
+    @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
 
     var body: some View {
+        let palette = ThemePalette.resolved(for: appEffectiveColorScheme)
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.headline)
@@ -288,7 +324,7 @@ struct SettingsSection<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Color.gray.opacity(0.08))
+        .background(palette.settingsSectionBackground)
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }

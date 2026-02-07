@@ -10,12 +10,14 @@ struct KeydeukKeydeukApp: App {
     @StateObject private var overlayVM: OverlayViewModel
     @StateObject private var settingsVM: SettingsViewModel
     @StateObject private var onboardingVM: OnboardingViewModel
+    @StateObject private var themeModeStore: ThemeModeStore
 
     init() {
         let container = ContainerHolder.shared
         _overlayVM = StateObject(wrappedValue: container.overlayViewModel)
         _settingsVM = StateObject(wrappedValue: container.settingsViewModel)
         _onboardingVM = StateObject(wrappedValue: container.onboardingViewModel)
+        _themeModeStore = StateObject(wrappedValue: container.themeModeStore)
         Task { @MainActor in
             ContainerHolder.shared.start()
         }
@@ -25,10 +27,16 @@ struct KeydeukKeydeukApp: App {
         WindowGroup("Onboarding") {
             AppWindowView(onboardingVM: onboardingVM, settingsVM: settingsVM)
                 .frame(minWidth: 720, minHeight: 520)
+                .applyThemeMode(themeModeStore.selectedThemeMode)
         }
 
         Settings {
-            SettingsWindowView(settingsVM: settingsVM, onboardingVM: onboardingVM)
+            SettingsWindowView(
+                settingsVM: settingsVM,
+                onboardingVM: onboardingVM,
+                themeModeStore: themeModeStore
+            )
+                .applyThemeMode(themeModeStore.selectedThemeMode)
         }
     }
 }
