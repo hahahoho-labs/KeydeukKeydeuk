@@ -1,20 +1,28 @@
 import AppKit
 import SwiftUI
 
-enum ThemeModeText {
-    static func title(for mode: Preferences.ThemeMode) -> String {
-        switch mode {
-        case .system: return "System Theme"
-        case .light: return "Light Theme"
-        case .dark: return "Dark Theme"
+enum ThemeText {
+    static func title(for theme: Preferences.Theme) -> String {
+        switch theme {
+        case .system: return "System"
+        case .light: return "Light"
+        case .dark: return "Dark"
+        case .graphite: return "Graphite"
+        case .warmPaper: return "Warm Paper"
+        case .nordMist: return "Nord Mist"
+        case .highContrast: return "High Contrast"
         }
     }
 
-    static func description(for mode: Preferences.ThemeMode) -> String {
-        switch mode {
-        case .system: return "Follow macOS appearance"
-        case .light: return "Always use light appearance"
-        case .dark: return "Always use dark appearance"
+    static func description(for theme: Preferences.Theme) -> String {
+        switch theme {
+        case .system: return "Follow macOS appearance with Frost palette"
+        case .light: return "Light appearance with Frost palette"
+        case .dark: return "Dark appearance with Frost palette"
+        case .graphite: return "Balanced neutral dark theme"
+        case .warmPaper: return "Warm low-glare paper-like theme"
+        case .nordMist: return "Cool blue-gray dark theme"
+        case .highContrast: return "Maximum readability and separation"
         }
     }
 }
@@ -49,18 +57,28 @@ private struct AppEffectiveColorSchemeKey: EnvironmentKey {
     static let defaultValue: ColorScheme = .light
 }
 
+private struct AppThemePresetKey: EnvironmentKey {
+    static let defaultValue: Preferences.ThemePreset = .frost
+}
+
 extension EnvironmentValues {
     var appEffectiveColorScheme: ColorScheme {
         get { self[AppEffectiveColorSchemeKey.self] }
         set { self[AppEffectiveColorSchemeKey.self] = newValue }
     }
+
+    var appThemePreset: Preferences.ThemePreset {
+        get { self[AppThemePresetKey.self] }
+        set { self[AppThemePresetKey.self] = newValue }
+    }
 }
 
 extension View {
-    func applyThemeMode(_ mode: Preferences.ThemeMode) -> some View {
+    func applyTheme(mode: Preferences.ThemeMode, preset: Preferences.ThemePreset) -> some View {
         let scheme = ThemeModeResolver.effectiveColorScheme(for: mode)
         return self
             .environment(\.appEffectiveColorScheme, scheme)
+            .environment(\.appThemePreset, preset)
             .background(WindowAppearanceConfigurator(mode: mode).frame(width: 0, height: 0))
             .preferredColorScheme(scheme)
     }
@@ -101,7 +119,35 @@ struct ThemePalette {
     let overlayRowHoverBackground: Color
     let overlayShadow: Color
 
+    @MainActor
+    static func resolved(for preset: Preferences.ThemePreset, scheme: ColorScheme) -> ThemePalette {
+        ThemePaletteCatalog.palette(for: preset, scheme: scheme)
+    }
+
+    @MainActor
     static func resolved(for scheme: ColorScheme) -> ThemePalette {
+        resolved(for: .frost, scheme: scheme)
+    }
+}
+
+private typealias ThemePaletteBuilder = (ColorScheme) -> ThemePalette
+
+@MainActor
+private enum ThemePaletteCatalog {
+    private static let builders: [Preferences.ThemePreset: ThemePaletteBuilder] = [
+        .frost: frost,
+        .graphite: graphite,
+        .warmPaper: warmPaper,
+        .nordMist: nordMist,
+        .highContrast: highContrast
+    ]
+
+    static func palette(for preset: Preferences.ThemePreset, scheme: ColorScheme) -> ThemePalette {
+        guard let builder = builders[preset] else { return frost(scheme) }
+        return builder(scheme)
+    }
+
+    private static func frost(_ scheme: ColorScheme) -> ThemePalette {
         switch scheme {
         case .light:
             return ThemePalette(
@@ -128,7 +174,131 @@ struct ThemePalette {
                 overlayShadow: Color.black.opacity(0.45)
             )
         @unknown default:
-            return resolved(for: .dark)
+            return frost(.dark)
+        }
+    }
+
+    private static func graphite(_ scheme: ColorScheme) -> ThemePalette {
+        switch scheme {
+        case .light:
+            return ThemePalette(
+                settingsSectionBackground: Color(red: 0.90, green: 0.91, blue: 0.93),
+                settingsErrorBackground: Color(red: 0.98, green: 0.88, blue: 0.88),
+                overlayBackdrop: Color.black.opacity(0.20),
+                overlayPanelBackground: Color(red: 0.92, green: 0.93, blue: 0.95).opacity(0.97),
+                overlayPanelBorder: Color.black.opacity(0.09),
+                overlaySearchBackground: Color.black.opacity(0.055),
+                overlayRowBackground: Color.black.opacity(0.022),
+                overlayRowHoverBackground: Color.black.opacity(0.052),
+                overlayShadow: Color.black.opacity(0.12)
+            )
+        case .dark:
+            return ThemePalette(
+                settingsSectionBackground: Color(red: 0.15, green: 0.16, blue: 0.18),
+                settingsErrorBackground: Color(red: 0.43, green: 0.16, blue: 0.16),
+                overlayBackdrop: Color.black.opacity(0.62),
+                overlayPanelBackground: Color(red: 0.11, green: 0.12, blue: 0.14).opacity(0.92),
+                overlayPanelBorder: Color.white.opacity(0.09),
+                overlaySearchBackground: Color.white.opacity(0.09),
+                overlayRowBackground: Color.white.opacity(0.035),
+                overlayRowHoverBackground: Color.white.opacity(0.09),
+                overlayShadow: Color.black.opacity(0.50)
+            )
+        @unknown default:
+            return graphite(.dark)
+        }
+    }
+
+    private static func warmPaper(_ scheme: ColorScheme) -> ThemePalette {
+        switch scheme {
+        case .light:
+            return ThemePalette(
+                settingsSectionBackground: Color(red: 0.96, green: 0.93, blue: 0.88),
+                settingsErrorBackground: Color(red: 0.99, green: 0.90, blue: 0.87),
+                overlayBackdrop: Color(red: 0.16, green: 0.12, blue: 0.07).opacity(0.15),
+                overlayPanelBackground: Color(red: 0.97, green: 0.95, blue: 0.91).opacity(0.97),
+                overlayPanelBorder: Color(red: 0.28, green: 0.21, blue: 0.13).opacity(0.12),
+                overlaySearchBackground: Color(red: 0.21, green: 0.16, blue: 0.11).opacity(0.07),
+                overlayRowBackground: Color(red: 0.21, green: 0.16, blue: 0.11).opacity(0.03),
+                overlayRowHoverBackground: Color(red: 0.21, green: 0.16, blue: 0.11).opacity(0.06),
+                overlayShadow: Color.black.opacity(0.10)
+            )
+        case .dark:
+            return ThemePalette(
+                settingsSectionBackground: Color(red: 0.22, green: 0.19, blue: 0.16),
+                settingsErrorBackground: Color(red: 0.47, green: 0.22, blue: 0.18),
+                overlayBackdrop: Color.black.opacity(0.58),
+                overlayPanelBackground: Color(red: 0.19, green: 0.16, blue: 0.13).opacity(0.91),
+                overlayPanelBorder: Color(red: 0.95, green: 0.86, blue: 0.74).opacity(0.14),
+                overlaySearchBackground: Color.white.opacity(0.08),
+                overlayRowBackground: Color.white.opacity(0.03),
+                overlayRowHoverBackground: Color.white.opacity(0.08),
+                overlayShadow: Color.black.opacity(0.46)
+            )
+        @unknown default:
+            return warmPaper(.dark)
+        }
+    }
+
+    private static func nordMist(_ scheme: ColorScheme) -> ThemePalette {
+        switch scheme {
+        case .light:
+            return ThemePalette(
+                settingsSectionBackground: Color(red: 0.91, green: 0.94, blue: 0.97),
+                settingsErrorBackground: Color(red: 0.95, green: 0.90, blue: 0.90),
+                overlayBackdrop: Color(red: 0.11, green: 0.17, blue: 0.25).opacity(0.14),
+                overlayPanelBackground: Color(red: 0.94, green: 0.96, blue: 0.98).opacity(0.96),
+                overlayPanelBorder: Color(red: 0.19, green: 0.29, blue: 0.40).opacity(0.10),
+                overlaySearchBackground: Color(red: 0.16, green: 0.23, blue: 0.33).opacity(0.06),
+                overlayRowBackground: Color(red: 0.16, green: 0.23, blue: 0.33).opacity(0.025),
+                overlayRowHoverBackground: Color(red: 0.16, green: 0.23, blue: 0.33).opacity(0.055),
+                overlayShadow: Color.black.opacity(0.11)
+            )
+        case .dark:
+            return ThemePalette(
+                settingsSectionBackground: Color(red: 0.16, green: 0.20, blue: 0.25),
+                settingsErrorBackground: Color(red: 0.36, green: 0.19, blue: 0.20),
+                overlayBackdrop: Color.black.opacity(0.56),
+                overlayPanelBackground: Color(red: 0.14, green: 0.18, blue: 0.23).opacity(0.90),
+                overlayPanelBorder: Color(red: 0.71, green: 0.80, blue: 0.90).opacity(0.12),
+                overlaySearchBackground: Color.white.opacity(0.08),
+                overlayRowBackground: Color.white.opacity(0.03),
+                overlayRowHoverBackground: Color.white.opacity(0.08),
+                overlayShadow: Color.black.opacity(0.47)
+            )
+        @unknown default:
+            return nordMist(.dark)
+        }
+    }
+
+    private static func highContrast(_ scheme: ColorScheme) -> ThemePalette {
+        switch scheme {
+        case .light:
+            return ThemePalette(
+                settingsSectionBackground: Color.white,
+                settingsErrorBackground: Color(red: 1.0, green: 0.90, blue: 0.90),
+                overlayBackdrop: Color.black.opacity(0.22),
+                overlayPanelBackground: Color.white.opacity(0.99),
+                overlayPanelBorder: Color.black.opacity(0.14),
+                overlaySearchBackground: Color.black.opacity(0.08),
+                overlayRowBackground: Color.black.opacity(0.028),
+                overlayRowHoverBackground: Color.black.opacity(0.08),
+                overlayShadow: Color.black.opacity(0.16)
+            )
+        case .dark:
+            return ThemePalette(
+                settingsSectionBackground: Color(red: 0.09, green: 0.09, blue: 0.10),
+                settingsErrorBackground: Color(red: 0.48, green: 0.18, blue: 0.18),
+                overlayBackdrop: Color.black.opacity(0.68),
+                overlayPanelBackground: Color(red: 0.08, green: 0.08, blue: 0.09).opacity(0.96),
+                overlayPanelBorder: Color.white.opacity(0.16),
+                overlaySearchBackground: Color.white.opacity(0.12),
+                overlayRowBackground: Color.white.opacity(0.045),
+                overlayRowHoverBackground: Color.white.opacity(0.12),
+                overlayShadow: Color.black.opacity(0.58)
+            )
+        @unknown default:
+            return highContrast(.dark)
         }
     }
 }

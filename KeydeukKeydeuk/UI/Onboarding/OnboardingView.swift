@@ -5,6 +5,8 @@ struct OnboardingView: View {
     let requestPermissionPrompt: () -> Void
     let openAccessibilitySettings: () -> Void
     let refreshPermissionState: () -> Void
+    @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
+    @Environment(\.appThemePreset) private var appThemePreset
 
     private var permissionStatusText: String {
         switch permissionState {
@@ -18,6 +20,7 @@ struct OnboardingView: View {
     }
 
     var body: some View {
+        let palette = ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
         VStack(alignment: .leading, spacing: 10) {
             Text("Onboarding")
                 .font(.headline)
@@ -45,7 +48,7 @@ struct OnboardingView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Color.gray.opacity(0.08))
+        .background(palette.settingsSectionBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }

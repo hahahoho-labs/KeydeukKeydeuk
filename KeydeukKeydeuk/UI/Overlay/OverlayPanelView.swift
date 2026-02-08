@@ -4,9 +4,10 @@ struct OverlayPanelView: View {
     @ObservedObject var viewModel: OverlayViewModel
     @ObservedObject var themeModeStore: ThemeModeStore
     @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
+    @Environment(\.appThemePreset) private var appThemePreset
 
     var body: some View {
-        let palette = ThemePalette.resolved(for: appEffectiveColorScheme)
+        let palette = ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
         ZStack {
             palette.overlayBackdrop
                 .ignoresSafeArea()
@@ -21,6 +22,9 @@ struct OverlayPanelView: View {
         .onExitCommand {
             viewModel.requestHide()
         }
-        .applyThemeMode(themeModeStore.selectedThemeMode)
+        .applyTheme(
+            mode: themeModeStore.selectedThemeMode,
+            preset: themeModeStore.selectedThemePreset
+        )
     }
 }

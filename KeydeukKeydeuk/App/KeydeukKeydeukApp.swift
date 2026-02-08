@@ -27,7 +27,10 @@ struct KeydeukKeydeukApp: App {
         WindowGroup("Onboarding") {
             AppWindowView(onboardingVM: onboardingVM, settingsVM: settingsVM)
                 .frame(minWidth: 720, minHeight: 520)
-                .applyThemeMode(themeModeStore.selectedThemeMode)
+                .applyTheme(
+                    mode: themeModeStore.selectedThemeMode,
+                    preset: themeModeStore.selectedThemePreset
+                )
         }
 
         Settings {
@@ -36,7 +39,10 @@ struct KeydeukKeydeukApp: App {
                 onboardingVM: onboardingVM,
                 themeModeStore: themeModeStore
             )
-                .applyThemeMode(themeModeStore.selectedThemeMode)
+                .applyTheme(
+                    mode: themeModeStore.selectedThemeMode,
+                    preset: themeModeStore.selectedThemePreset
+                )
         }
     }
 }

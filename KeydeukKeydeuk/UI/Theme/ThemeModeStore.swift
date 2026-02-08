@@ -3,14 +3,17 @@ import Foundation
 
 @MainActor
 final class ThemeModeStore: ObservableObject {
-    @Published private(set) var selectedThemeMode: Preferences.ThemeMode
+    @Published private(set) var selectedTheme: Preferences.Theme
 
-    init(initialMode: Preferences.ThemeMode) {
-        self.selectedThemeMode = initialMode
+    var selectedThemeMode: Preferences.ThemeMode { selectedTheme.mode }
+    var selectedThemePreset: Preferences.ThemePreset { selectedTheme.preset }
+
+    init(initialTheme: Preferences.Theme) {
+        self.selectedTheme = initialTheme
     }
 
-    func update(mode: Preferences.ThemeMode) {
-        guard selectedThemeMode != mode else { return }
-        selectedThemeMode = mode
+    func update(theme: Preferences.Theme) {
+        guard selectedTheme != theme else { return }
+        selectedTheme = theme
     }
 }

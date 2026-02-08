@@ -62,7 +62,9 @@ final class AppContainer {
             loadPreferences: loadPreferences,
             updatePreferences: updatePreferences
         )
-        self.themeModeStore = ThemeModeStore(initialMode: settingsViewModel.selectedThemeMode)
+        self.themeModeStore = ThemeModeStore(
+            initialTheme: settingsViewModel.selectedTheme
+        )
 
         self.onboardingViewModel = OnboardingViewModel(
             loadPreferences: loadPreferences,
@@ -95,7 +97,7 @@ final class AppContainer {
             .dropFirst() // 초기값은 이미 initialPreferences로 전달됨
             .sink { [weak self] prefs in
                 self?.orchestrator?.updatePreferences(prefs)
-                self?.themeModeStore.update(mode: prefs.themeMode)
+                self?.themeModeStore.update(theme: prefs.theme)
             }
             .store(in: &cancellables)
         self.statusBarController.onPrimaryClick = { [weak self] in
@@ -220,7 +222,7 @@ final class AppContainer {
         let window = NSWindow(contentViewController: host)
         window.title = "Settings"
         window.styleMask = NSWindow.StyleMask([.titled, .closable, .miniaturizable])
-        window.setContentSize(NSSize(width: 620, height: 480))
+        window.setContentSize(NSSize(width: 760, height: 560))
         window.center()
         let controller = NSWindowController(window: window)
         controller.showWindow(nil)

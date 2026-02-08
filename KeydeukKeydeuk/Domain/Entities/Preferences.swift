@@ -12,14 +12,82 @@ struct Preferences: Codable, Equatable {
         case dark
     }
 
+    enum ThemePreset: String, Codable, CaseIterable {
+        case frost
+        case graphite
+        case warmPaper
+        case nordMist
+        case highContrast
+    }
+
+    enum Theme: String, Codable, CaseIterable {
+        case system
+        case light
+        case dark
+        case graphite
+        case warmPaper
+        case nordMist
+        case highContrast
+
+        var mode: ThemeMode {
+            switch self {
+            case .system:
+                return .system
+            case .light:
+                return .light
+            case .dark, .graphite, .nordMist, .highContrast:
+                return .dark
+            case .warmPaper:
+                return .light
+            }
+        }
+
+        var preset: ThemePreset {
+            switch self {
+            case .system, .light, .dark:
+                return .frost
+            case .graphite:
+                return .graphite
+            case .warmPaper:
+                return .warmPaper
+            case .nordMist:
+                return .nordMist
+            case .highContrast:
+                return .highContrast
+            }
+        }
+
+        static func from(mode: ThemeMode, preset: ThemePreset) -> Theme {
+            switch preset {
+            case .frost:
+                switch mode {
+                case .system: return .system
+                case .light: return .light
+                case .dark: return .dark
+                }
+            case .graphite:
+                return .graphite
+            case .warmPaper:
+                return .warmPaper
+            case .nordMist:
+                return .nordMist
+            case .highContrast:
+                return .highContrast
+            }
+        }
+    }
+
     var trigger: Trigger
     var hotkeyKeyCode: Int
     var hotkeyModifiersRawValue: Int
     var holdDurationSeconds: Double
     var autoHideOnAppSwitch: Bool
     var autoHideOnEsc: Bool
-    var themeMode: ThemeMode
+    var theme: Theme
     var hasCompletedOnboarding: Bool
+
+    var themeMode: ThemeMode { theme.mode }
+    var themePreset: ThemePreset { theme.preset }
 
     var hotkeyModifiers: KeyModifiers {
         KeyModifiers(rawValue: hotkeyModifiersRawValue)
@@ -32,7 +100,7 @@ struct Preferences: Codable, Equatable {
         holdDurationSeconds: Double,
         autoHideOnAppSwitch: Bool,
         autoHideOnEsc: Bool,
-        themeMode: ThemeMode,
+        theme: Theme,
         hasCompletedOnboarding: Bool
     ) {
         self.trigger = trigger
@@ -41,7 +109,7 @@ struct Preferences: Codable, Equatable {
         self.holdDurationSeconds = holdDurationSeconds
         self.autoHideOnAppSwitch = autoHideOnAppSwitch
         self.autoHideOnEsc = autoHideOnEsc
-        self.themeMode = themeMode
+        self.theme = theme
         self.hasCompletedOnboarding = hasCompletedOnboarding
     }
 
@@ -52,7 +120,7 @@ struct Preferences: Codable, Equatable {
         holdDurationSeconds: 1.0,
         autoHideOnAppSwitch: true,
         autoHideOnEsc: true,
-        themeMode: .system,
+        theme: .system,
         hasCompletedOnboarding: false
     )
 
@@ -63,7 +131,9 @@ struct Preferences: Codable, Equatable {
         case holdDurationSeconds
         case autoHideOnAppSwitch
         case autoHideOnEsc
+        case theme
         case themeMode
+        case themePreset
         case hasCompletedOnboarding
     }
 
@@ -77,7 +147,25 @@ struct Preferences: Codable, Equatable {
         holdDurationSeconds = try container.decodeIfPresent(Double.self, forKey: .holdDurationSeconds) ?? defaults.holdDurationSeconds
         autoHideOnAppSwitch = try container.decodeIfPresent(Bool.self, forKey: .autoHideOnAppSwitch) ?? defaults.autoHideOnAppSwitch
         autoHideOnEsc = try container.decodeIfPresent(Bool.self, forKey: .autoHideOnEsc) ?? defaults.autoHideOnEsc
-        themeMode = try container.decodeIfPresent(ThemeMode.self, forKey: .themeMode) ?? defaults.themeMode
+        if let decodedTheme = try container.decodeIfPresent(Theme.self, forKey: .theme) {
+            theme = decodedTheme
+        } else {
+            let legacyMode = try container.decodeIfPresent(ThemeMode.self, forKey: .themeMode) ?? defaults.themeMode
+            let legacyPreset = try container.decodeIfPresent(ThemePreset.self, forKey: .themePreset) ?? defaults.themePreset
+            theme = Theme.from(mode: legacyMode, preset: legacyPreset)
+        }
         hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? defaults.hasCompletedOnboarding
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(trigger, forKey: .trigger)
+        try container.encode(hotkeyKeyCode, forKey: .hotkeyKeyCode)
+        try container.encode(hotkeyModifiersRawValue, forKey: .hotkeyModifiersRawValue)
+        try container.encode(holdDurationSeconds, forKey: .holdDurationSeconds)
+        try container.encode(autoHideOnAppSwitch, forKey: .autoHideOnAppSwitch)
+        try container.encode(autoHideOnEsc, forKey: .autoHideOnEsc)
+        try container.encode(theme, forKey: .theme)
+        try container.encode(hasCompletedOnboarding, forKey: .hasCompletedOnboarding)
     }
 }

@@ -40,7 +40,7 @@ final class SettingsViewModel: ObservableObject {
     var holdDuration: Double { preferences.holdDurationSeconds }
     var autoHideOnEsc: Bool { preferences.autoHideOnEsc }
     var autoHideOnAppSwitch: Bool { preferences.autoHideOnAppSwitch }
-    var selectedThemeMode: Preferences.ThemeMode { preferences.themeMode }
+    var selectedTheme: Preferences.Theme { preferences.theme }
 
     var selectedHotkeyPresetID: String {
         hotkeyPresets.first {
@@ -78,8 +78,8 @@ final class SettingsViewModel: ObservableObject {
         updatePreferences { $0.autoHideOnAppSwitch = isOn }
     }
 
-    func setThemeMode(_ mode: Preferences.ThemeMode) {
-        updatePreferences { $0.themeMode = mode }
+    func setTheme(_ theme: Preferences.Theme) {
+        updatePreferences { $0.theme = theme }
     }
 
     // MARK: - Private

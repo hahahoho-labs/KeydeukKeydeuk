@@ -40,7 +40,7 @@ KeydeukKeydeuk/
       Activation.swift          # KeyModifiers, KeyEvent, ActivationDecision
       AppContext.swift           # 앱 컨텍스트 (bundleID, appName)
       Permission.swift           # PermissionState, PermissionRequirement
-      Preferences.swift          # 사용자 설정 (트리거, 핫키, 동작, 테마, 온보딩)
+      Preferences.swift          # 사용자 설정 (트리거, 핫키, 동작, 통합 테마, 온보딩)
       Shortcut.swift             # 단축키 항목
       ShortcutCatalog.swift      # 앱별 단축키 카탈로그
     Policies/
@@ -93,7 +93,8 @@ KeydeukKeydeuk/
       SettingsViewModel.swift       # 트리거/핫키/동작 설정 관리
       SettingsWindowView.swift      # 탭 기반 설정 창 컨테이너
     Theme/
-      AppTheme.swift                # ThemeMode 적용 + 컬러 팔레트 토큰 관리
+      AppTheme.swift                # 통합 테마 적용 + 컬러 팔레트 레지스트리
+      ThemeModeStore.swift          # 현재 테마 상태 전파용 읽기 모델
 ```
 
 ## 레이어 책임
@@ -270,7 +271,7 @@ sequenceDiagram
 - 오버레이 표시/숨김 (NSPanel 기반 전체 화면 딤 + 멀티 컬럼 KeyCue 스타일 그리드)
 - 검색 가능한 단축키 리스트 표시
 - 핫키 프리셋/자동숨김 토글/트리거 타입/홀드 시간 설정 저장(UserDefaults)
-- **테마 설정**: System/Light/Dark 저장 및 앱 전역(온보딩/설정/오버레이) 적용
+- **테마 설정**: 통합 테마(System/Light/Dark/Graphite/Warm Paper/Nord Mist/High Contrast) 저장 및 앱 전역(온보딩/설정/오버레이) 적용
 - **테마 팔레트 중앙화**: `UI/Theme/AppTheme.swift`에서 overlay/settings 컬러 토큰 관리
 - 온보딩 완료 후 StatusBar 중심 동작(좌클릭 트리거, 우클릭 메뉴)
 - 온보딩 완료 후 메인 창은 숨김(orderOut) 처리
@@ -278,7 +279,7 @@ sequenceDiagram
 - 현재 앱 카탈로그가 없더라도 빈 오버레이를 표시하고, "No shortcuts yet" 안내
 - **설정 창: 탭 기반 레이아웃 (General / Theme / Help)**
   - General: Activation(트리거 타입·홀드 시간·핫키 프리셋), Behavior(자동숨김), Permissions(상태 뱃지·리프레시·설정 열기)
-  - Theme: System/Light/Dark 선택, 즉시 적용
+  - Theme: 통합 Theme 드롭다운(기본/커스텀 그룹), 중앙 Preview, 우측 하단 Save로 반영(비즉시 적용)
   - Help: placeholder (미구현)
   - 하단: Quit / Cancel / OK 버튼 바
   - 설정 저장 실패 시 인라인 에러 배너 표시

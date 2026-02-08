@@ -10,6 +10,54 @@ KeydeukKeydeuk는 macOS에서 현재 활성 앱의 메뉴 바 단축키를 Acces
 - MVVM: View는 상태 렌더링, ViewModel은 유스케이스 호출/상태 조합 담당
 - 단방향 의존성: `UI -> Application -> Domain`, `Data/Platform -> Domain`
 - Orchestrator는 저장소를 직접 참조하지 않고 `Preferences` 값 객체를 캐시해 동작
+- SOLID 원칙 명세를 따른다
+
+SOLID 원칙 명세 (SOLID Principles Specification):
+
+### S - 단일 책임 원칙 (Single Responsibility Principle, SRP)
+
+**정의**: 하나의 모듈은 오직 하나의 액터(actor)에 대해서만 책임을 져야 한다.
+
+**설명**: 하나의 모듈은 오직 하나의 변경 이유만을 가져야 한다. 여기서 액터란 변경을 요구하는 주체로, 사람, 역할, 혹은 특정 이해관계 집단을 의미한다.  
+하나의 모듈이 서로 다른 요구를 가진 여러 액터를 동시에 만족시키려 할 경우, 이는 SRP를 위반하게 된다.  
+SRP는 함수의 개수가 아니라 **사람과 역할**에 관한 원칙이다.  
+서로 다른 이유로 변경되는 시스템의 각 측면은, 변경의 영향을 최소화하기 위해 서로 분리된 모듈로 나뉘어야 한다.
+
+### O - 개방-폐쇄 원칙 (Open/Closed Principle, OCP)
+
+**정의**: 소프트웨어 엔티티는 확장에는 열려 있어야 하고, 수정에는 닫혀 있어야 한다.
+
+**설명**: 소프트웨어 모듈의 동작은 소스 코드를 수정하지 않고도 확장 가능해야 한다.  
+이는 추상화와 다형성을 통해 달성되며, 기존에 잘 동작하던 코드를 변경하는 대신 새로운 코드를 추가함으로써 기능을 확장한다.  
+목표는 한 번 구현된 모듈은 더 이상 변경되지 않으면서도, 추상화의 새로운 구현을 통해 시스템의 동작을 확장할 수 있도록 설계하는 것이다.
+
+### L - 리스코프 치환 원칙 (Liskov Substitution Principle, LSP)
+
+**정의**: 상위 클래스의 객체는 해당 클래스를 상속한 하위 클래스의 객체로 대체되더라도 애플리케이션의 동작이 깨져서는 안 된다.
+
+**설명**: 하위 타입은 반드시 상위 타입을 **행동적으로 대체 가능**해야 한다. 이는 단순한 문법적 호환성을 넘어, 의미적 호환성을 요구한다.  
+하위 타입은 상위 타입이 정의한 암묵적·명시적 계약을 모두 준수해야 하며,  
+사전 조건을 강화해서도 안 되고, 사후 조건을 약화해서도 안 되며, 상위 타입이 정의한 불변식을 위반해서도 안 된다.  
+이 원칙은 상속 구조가 진정한 “is-a” 관계를 표현하며, 일관된 동작을 보장하도록 한다.
+
+### I - 인터페이스 분리 원칙 (Interface Segregation Principle, ISP)
+
+**정의**: 클라이언트는 자신이 사용하지 않는 인터페이스에 의존하도록 강요받아서는 안 된다.
+
+**설명**: 어떤 클라이언트도 사용하지 않는 메서드를 구현하도록 강제되어서는 안 된다.  
+하나의 범용 인터페이스보다는, 여러 개의 구체적이고 목적에 맞는 인터페이스가 바람직하다.  
+인터페이스는 구현체의 관점이 아니라, **클라이언트의 관점**에서 설계되어야 한다.  
+클라이언트가 필요하지 않은 메서드에 의존하게 되면 불필요한 결합도가 생기며, 인터페이스 변경 시 영향을 받는 범위가 커지게 된다.
+
+### D - 의존성 역전 원칙 (Dependency Inversion Principle, DIP)
+
+**정의**: 고수준 모듈은 저수준 모듈에 의존해서는 안 되며, 둘 다 추상화에 의존해야 한다.
+
+**설명**: 의존성은 구체가 아니라 추상화를 향해 흐르도록 설계되어야 한다.  
+고수준 정책은 저수준의 세부 구현에 의존해서는 안 되며, 대신 둘 다 추상화에 의존해야 한다.  
+또한 추상화는 세부 사항에 의존해서는 안 되고, 세부 사항이 추상화에 의존해야 한다.  
+이 원칙은 전통적인 의존 관계를 뒤집어, 고수준 모듈이 저수준 모듈에 직접 의존하던 구조를 제거함으로써  
+비즈니스 규칙에 영향을 주지 않고도 구체 구현을 교체할 수 있는 유연한 아키텍처를 가능하게 한다.
 
 ---
 
@@ -162,6 +210,7 @@ KeydeukKeydeuk/
       SettingsWindowView.swift
     Theme/
       AppTheme.swift
+      ThemeModeStore.swift
 ```
 
 ---
@@ -175,7 +224,7 @@ KeydeukKeydeuk/
 - SwiftUI 앱 진입점(`@main`)
 - `AppContainer`에서 주입된 VM을 Scene에 연결
 - 앱 시작 시 `container.start()` 호출
-- 루트 Scene에 `applyThemeMode(...)`를 적용해 앱 전역 테마 동기화
+- 루트 Scene에 `applyTheme(mode:preset:)`를 적용해 앱 전역 테마 동기화
 
 ### `App/AppContainer.swift`
 
@@ -184,7 +233,7 @@ KeydeukKeydeuk/
 - UseCase 생성(Application)
 - ViewModel 생성(UI)
 - `SettingsViewModel.$preferences`를 구독해 `AppOrchestrator.updatePreferences(...)`로 전파
-- `SettingsViewModel`을 `OverlayPanelController`에 전달해 오버레이 패널에도 동일 테마 적용
+- `ThemeModeStore`를 `OverlayPanelController`에 전달해 오버레이 패널에도 동일 테마 적용
 - StatusBar 좌/우클릭 라우팅
 - 권한 허용 후 앱 복귀 시 자동 오버레이 표시 처리(`pendingOverlayAfterPermission`)
 - 온보딩 상태에 따라 activation policy(`regular`/`accessory`)와 윈도우 표시 상태 제어
@@ -203,7 +252,7 @@ KeydeukKeydeuk/
 - `OverlaySceneState.isVisible` 구독
 - `NSPanel` 생성/표시/숨김 담당
 - 마우스 위치 기준 대상 스크린을 찾아 풀스크린 오버레이 패널 표시
-- `OverlayPanelView`에 Theme 상태(`SettingsViewModel.selectedThemeMode`) 전달
+- `OverlayPanelView`에 Theme 상태(`ThemeModeStore.selectedTheme`) 전달
 
 ---
 
@@ -219,7 +268,7 @@ KeydeukKeydeuk/
 
 ### `Domain/Entities/Preferences.swift`
 
-- 트리거 타입, 핫키 키코드/모디파이어, 홀드 시간, auto-hide, 테마 모드, 온보딩 완료 여부
+- 트리거 타입, 핫키 키코드/모디파이어, 홀드 시간, auto-hide, 통합 테마(`Preferences.Theme`), 온보딩 완료 여부
 - 기본값(`.default`)과 디코딩 시 기본값 복구 로직 보유
 
 ### `Domain/Entities/AppContext.swift`
@@ -391,12 +440,12 @@ KeydeukKeydeuk/
 ### `UI/Overlay/OverlayView.swift`
 
 - 앱 정보 헤더, 검색창, 섹션별 단축키 그리드, 빈 상태 표시
-- `ThemePalette` 토큰을 사용해 Light/Dark 톤을 분기 렌더링
+- `ThemePalette` 토큰(프리셋 기반)을 사용해 통합 테마 톤을 렌더링
 
 ### `UI/Overlay/OverlayPanelView.swift`
 
 - 배경 딤 + 탭/ESC hide 트리거
-- `applyThemeMode(...)`를 통해 패널 appearance와 colorScheme 적용
+- `applyTheme(mode:preset:)`를 통해 패널 appearance와 colorScheme 적용
 
 ### `UI/Overlay/RootView.swift`, `AppWindowView.swift`
 
@@ -407,7 +456,7 @@ KeydeukKeydeuk/
 ### `UI/Settings/SettingsViewModel.swift`
 
 - 설정 읽기/수정 API 제공
-- 트리거 타입, 홀드 시간, 프리셋 핫키, auto-hide 토글, 테마 모드 반영
+- 트리거 타입, 홀드 시간, 프리셋 핫키, auto-hide 토글, 통합 테마 반영
 - 저장 실패 시 인라인 오류 메시지 관리
 
 ### `UI/Settings/SettingsWindowView.swift`
@@ -418,13 +467,13 @@ KeydeukKeydeuk/
 ### `UI/Settings/SettingsView.swift`
 
 - General 탭(Activation/Behavior/Permissions)
-- Theme 탭(System/Light/Dark) + Help placeholder
+- Theme 탭(통합 Theme 드롭다운 + Preview + Save) + Help placeholder
 
 ### `UI/Theme/AppTheme.swift`
 
 - `ThemeMode` -> `ColorScheme`/`NSAppearance` 매핑
-- `ThemePalette`로 Settings/Overlay 컬러 토큰 중앙 관리
-- `applyThemeMode(...)`로 앱 전역 테마/환경값(`appEffectiveColorScheme`) 주입
+- `ThemePreset`별 `ThemePalette` 레지스트리로 Settings/Overlay 컬러 토큰 중앙 관리
+- `applyTheme(mode:preset:)`로 앱 전역 테마/환경값(`appEffectiveColorScheme`, `appThemePreset`) 주입
 
 ---
 
@@ -523,12 +572,14 @@ sequenceDiagram
   participant TP as UI.Theme(AppTheme)
   participant OV as OverlayPanelView
 
-  SV->>SVM: setThemeMode(system/light/dark)
+  SV->>SVM: Theme 드롭다운 선택(draft)
+  Note over SV: Preview만 즉시 갱신(저장 전 전역 반영 없음)
+  SV->>SVM: Save 탭(setTheme)
   SVM->>UP: execute(updatedPreferences)
   UP->>PS: save(...)
-  SVM-->>APP: @Published preferences.themeMode
-  APP->>TP: applyThemeMode(themeMode)
-  TP-->>APP: appEffectiveColorScheme 주입
+  SVM-->>APP: @Published preferences.theme
+  APP->>TP: applyTheme(mode:preset:)
+  TP-->>APP: appEffectiveColorScheme + appThemePreset 주입
   APP-->>OV: overlay/settings/onboarding 동시 리렌더
 ```
 

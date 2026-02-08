@@ -14,6 +14,7 @@ private struct ShortcutGroup: Identifiable {
 struct OverlayView: View {
     @ObservedObject var viewModel: OverlayViewModel
     @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
+    @Environment(\.appThemePreset) private var appThemePreset
 
     private var groupedShortcuts: [ShortcutGroup] {
         let shortcuts = viewModel.filteredShortcuts
@@ -24,7 +25,7 @@ struct OverlayView: View {
     }
 
     var body: some View {
-        let palette = ThemePalette.resolved(for: appEffectiveColorScheme)
+        let palette = ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
         VStack(spacing: 0) {
             headerBar
 
@@ -83,7 +84,7 @@ struct OverlayView: View {
     }
 
     private var searchField: some View {
-        let palette = ThemePalette.resolved(for: appEffectiveColorScheme)
+        let palette = ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
         return HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
                 .font(.caption)
@@ -219,9 +220,10 @@ private struct ShortcutRowView: View {
     let shortcut: Shortcut
     @State private var isHovered = false
     @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
+    @Environment(\.appThemePreset) private var appThemePreset
 
     var body: some View {
-        let palette = ThemePalette.resolved(for: appEffectiveColorScheme)
+        let palette = ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
         HStack(spacing: 8) {
             Text(shortcut.title)
                 .font(.callout)

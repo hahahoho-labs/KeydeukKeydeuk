@@ -5,6 +5,8 @@ struct SettingsWindowView: View {
     @ObservedObject var settingsVM: SettingsViewModel
     @ObservedObject var onboardingVM: OnboardingViewModel
     @ObservedObject var themeModeStore: ThemeModeStore
+    @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
+    @Environment(\.appThemePreset) private var appThemePreset
     @State private var selectedTab: SettingsTab = .general
 
     enum SettingsTab: String, CaseIterable {
@@ -22,6 +24,7 @@ struct SettingsWindowView: View {
     }
 
     var body: some View {
+        let palette = ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
         VStack(spacing: 0) {
             // Tab Bar
             tabBar
@@ -37,8 +40,15 @@ struct SettingsWindowView: View {
             // Bottom Button Bar
             bottomBar
         }
-        .frame(minWidth: 600, minHeight: 440)
-        .applyThemeMode(themeModeStore.selectedThemeMode)
+        .frame(minWidth: 760, minHeight: 560)
+        .background(
+            palette.overlayBackdrop
+                .opacity(appEffectiveColorScheme == .dark ? 0.35 : 0.22)
+        )
+        .applyTheme(
+            mode: themeModeStore.selectedThemeMode,
+            preset: themeModeStore.selectedThemePreset
+        )
         .onAppear {
             onboardingVM.refreshPermissionState()
         }
