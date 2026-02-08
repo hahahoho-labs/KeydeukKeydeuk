@@ -175,17 +175,12 @@ struct GeneralSettingsTab: View {
 
 struct ThemeSettingsTab: View {
     @ObservedObject var settingsVM: SettingsViewModel
-    @State private var draftTheme: Preferences.Theme?
 
     private let defaultThemes: [Preferences.Theme] = [.system, .light, .dark]
     private let customThemes: [Preferences.Theme] = [.graphite, .warmPaper, .nordMist, .highContrast]
 
     private var selectedTheme: Preferences.Theme {
-        draftTheme ?? settingsVM.selectedTheme
-    }
-
-    private var hasPendingThemeChange: Bool {
-        selectedTheme != settingsVM.selectedTheme
+        settingsVM.selectedTheme
     }
 
     var body: some View {
@@ -200,7 +195,7 @@ struct ThemeSettingsTab: View {
                         "Theme",
                         selection: Binding(
                             get: { selectedTheme },
-                            set: { draftTheme = $0 }
+                            set: { settingsVM.setTheme($0) }
                         )
                     ) {
                         ForEach(defaultThemes, id: \.self) { theme in
@@ -226,30 +221,13 @@ struct ThemeSettingsTab: View {
                             .frame(maxWidth: 640)
                             .frame(maxWidth: .infinity)
 
-                        Text(hasPendingThemeChange ? "Click Save to apply this preview." : "This theme is currently active.")
+                        Text("This theme is currently active.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
-
-                HStack {
-                    Spacer()
-                    Button("Save") {
-                        let targetTheme = selectedTheme
-                        settingsVM.setTheme(targetTheme)
-                        if settingsVM.selectedTheme == targetTheme {
-                            draftTheme = nil
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!hasPendingThemeChange)
-                    .applyDisabledButtonAppearance()
-                }
             }
             .padding(20)
-        }
-        .onAppear {
-            draftTheme = nil
         }
     }
 }

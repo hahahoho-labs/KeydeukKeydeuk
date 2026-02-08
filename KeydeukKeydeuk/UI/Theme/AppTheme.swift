@@ -108,6 +108,8 @@ private struct WindowAppearanceConfigurator: NSViewRepresentable {
 }
 
 struct ThemePalette {
+    let settingsWindowBackground: Color
+    let settingsTabActiveBackground: Color
     let settingsSectionBackground: Color
     let settingsErrorBackground: Color
 
@@ -151,6 +153,8 @@ private enum ThemePaletteCatalog {
         switch scheme {
         case .light:
             return ThemePalette(
+                settingsWindowBackground: Color(red: 0.96, green: 0.965, blue: 0.98),
+                settingsTabActiveBackground: Color.accentColor.opacity(0.12),
                 settingsSectionBackground: Color(red: 0.94, green: 0.95, blue: 0.97),
                 settingsErrorBackground: Color(red: 1.0, green: 0.92, blue: 0.92),
                 overlayBackdrop: Color.black.opacity(0.16),
@@ -163,6 +167,8 @@ private enum ThemePaletteCatalog {
             )
         case .dark:
             return ThemePalette(
+                settingsWindowBackground: Color(red: 0.14, green: 0.14, blue: 0.16),
+                settingsTabActiveBackground: Color.accentColor.opacity(0.15),
                 settingsSectionBackground: Color.white.opacity(0.08),
                 settingsErrorBackground: Color(red: 0.42, green: 0.14, blue: 0.14),
                 overlayBackdrop: Color.black.opacity(0.55),
@@ -182,6 +188,8 @@ private enum ThemePaletteCatalog {
         switch scheme {
         case .light:
             return ThemePalette(
+                settingsWindowBackground: Color(red: 0.92, green: 0.925, blue: 0.94),
+                settingsTabActiveBackground: Color(red: 0.52, green: 0.54, blue: 0.58).opacity(0.18),
                 settingsSectionBackground: Color(red: 0.90, green: 0.91, blue: 0.93),
                 settingsErrorBackground: Color(red: 0.98, green: 0.88, blue: 0.88),
                 overlayBackdrop: Color.black.opacity(0.20),
@@ -194,6 +202,8 @@ private enum ThemePaletteCatalog {
             )
         case .dark:
             return ThemePalette(
+                settingsWindowBackground: Color(red: 0.12, green: 0.125, blue: 0.14),
+                settingsTabActiveBackground: Color(red: 0.55, green: 0.57, blue: 0.62).opacity(0.20),
                 settingsSectionBackground: Color(red: 0.15, green: 0.16, blue: 0.18),
                 settingsErrorBackground: Color(red: 0.43, green: 0.16, blue: 0.16),
                 overlayBackdrop: Color.black.opacity(0.62),
@@ -213,6 +223,8 @@ private enum ThemePaletteCatalog {
         switch scheme {
         case .light:
             return ThemePalette(
+                settingsWindowBackground: Color(red: 0.97, green: 0.945, blue: 0.91),
+                settingsTabActiveBackground: Color(red: 0.72, green: 0.56, blue: 0.36).opacity(0.16),
                 settingsSectionBackground: Color(red: 0.96, green: 0.93, blue: 0.88),
                 settingsErrorBackground: Color(red: 0.99, green: 0.90, blue: 0.87),
                 overlayBackdrop: Color(red: 0.16, green: 0.12, blue: 0.07).opacity(0.15),
@@ -225,6 +237,8 @@ private enum ThemePaletteCatalog {
             )
         case .dark:
             return ThemePalette(
+                settingsWindowBackground: Color(red: 0.17, green: 0.145, blue: 0.12),
+                settingsTabActiveBackground: Color(red: 0.78, green: 0.62, blue: 0.42).opacity(0.20),
                 settingsSectionBackground: Color(red: 0.22, green: 0.19, blue: 0.16),
                 settingsErrorBackground: Color(red: 0.47, green: 0.22, blue: 0.18),
                 overlayBackdrop: Color.black.opacity(0.58),
@@ -244,6 +258,8 @@ private enum ThemePaletteCatalog {
         switch scheme {
         case .light:
             return ThemePalette(
+                settingsWindowBackground: Color(red: 0.93, green: 0.955, blue: 0.975),
+                settingsTabActiveBackground: Color(red: 0.36, green: 0.55, blue: 0.74).opacity(0.14),
                 settingsSectionBackground: Color(red: 0.91, green: 0.94, blue: 0.97),
                 settingsErrorBackground: Color(red: 0.95, green: 0.90, blue: 0.90),
                 overlayBackdrop: Color(red: 0.11, green: 0.17, blue: 0.25).opacity(0.14),
@@ -256,6 +272,8 @@ private enum ThemePaletteCatalog {
             )
         case .dark:
             return ThemePalette(
+                settingsWindowBackground: Color(red: 0.13, green: 0.16, blue: 0.20),
+                settingsTabActiveBackground: Color(red: 0.45, green: 0.65, blue: 0.85).opacity(0.18),
                 settingsSectionBackground: Color(red: 0.16, green: 0.20, blue: 0.25),
                 settingsErrorBackground: Color(red: 0.36, green: 0.19, blue: 0.20),
                 overlayBackdrop: Color.black.opacity(0.56),
@@ -275,6 +293,8 @@ private enum ThemePaletteCatalog {
         switch scheme {
         case .light:
             return ThemePalette(
+                settingsWindowBackground: Color(red: 0.97, green: 0.97, blue: 0.97),
+                settingsTabActiveBackground: Color.black.opacity(0.10),
                 settingsSectionBackground: Color.white,
                 settingsErrorBackground: Color(red: 1.0, green: 0.90, blue: 0.90),
                 overlayBackdrop: Color.black.opacity(0.22),
@@ -287,6 +307,8 @@ private enum ThemePaletteCatalog {
             )
         case .dark:
             return ThemePalette(
+                settingsWindowBackground: Color(red: 0.06, green: 0.06, blue: 0.07),
+                settingsTabActiveBackground: Color.white.opacity(0.14),
                 settingsSectionBackground: Color(red: 0.09, green: 0.09, blue: 0.10),
                 settingsErrorBackground: Color(red: 0.48, green: 0.18, blue: 0.18),
                 overlayBackdrop: Color.black.opacity(0.68),

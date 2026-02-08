@@ -5,8 +5,6 @@ struct SettingsWindowView: View {
     @ObservedObject var settingsVM: SettingsViewModel
     @ObservedObject var onboardingVM: OnboardingViewModel
     @ObservedObject var themeModeStore: ThemeModeStore
-    @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
-    @Environment(\.appThemePreset) private var appThemePreset
     @State private var selectedTab: SettingsTab = .general
 
     enum SettingsTab: String, CaseIterable {
@@ -23,8 +21,17 @@ struct SettingsWindowView: View {
         }
     }
 
+    /// themeModeStore에서 직접 계산 — @Environment는 .applyTheme() 아래 자식에만 전파되므로
+    /// SettingsWindowView 자체 body에서는 themeModeStore를 truth로 사용한다.
+    private var resolvedScheme: ColorScheme {
+        ThemeModeResolver.effectiveColorScheme(for: themeModeStore.selectedThemeMode)
+    }
+
+    private var resolvedPalette: ThemePalette {
+        ThemePalette.resolved(for: themeModeStore.selectedThemePreset, scheme: resolvedScheme)
+    }
+
     var body: some View {
-        let palette = ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
         VStack(spacing: 0) {
             // Tab Bar
             tabBar
@@ -41,10 +48,7 @@ struct SettingsWindowView: View {
             bottomBar
         }
         .frame(minWidth: 760, minHeight: 560)
-        .background(
-            palette.overlayBackdrop
-                .opacity(appEffectiveColorScheme == .dark ? 0.35 : 0.22)
-        )
+        .background(resolvedPalette.settingsWindowBackground)
         .applyTheme(
             mode: themeModeStore.selectedThemeMode,
             preset: themeModeStore.selectedThemePreset
@@ -82,7 +86,7 @@ struct SettingsWindowView: View {
             .contentShape(Rectangle())
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(selectedTab == tab ? Color.accentColor.opacity(0.12) : Color.clear)
+                    .fill(selectedTab == tab ? resolvedPalette.settingsTabActiveBackground : Color.clear)
             )
         }
         .buttonStyle(.plain)
