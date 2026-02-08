@@ -6,17 +6,12 @@ protocol ActivationPolicy {
 
 struct DefaultActivationPolicy: ActivationPolicy {
     func evaluate(event: KeyEvent, preferences: Preferences) -> ActivationDecision {
-        guard preferences.trigger == .globalHotkey else {
-            return .ignore
-        }
-
-        let hotkeyMatched = event.isKeyDown
-            && event.keyCode == preferences.hotkeyKeyCode
-            && event.modifiers == preferences.hotkeyModifiers
-
-        if hotkeyMatched {
-            return .activate
-        }
+        // NOTE: custom shortcut feature is temporarily disabled.
+//        if preferences.trigger == .customShortcut,
+//           event.isKeyDown,
+//           preferences.customHotkeys.contains(where: { $0.matches(event) }) {
+//            return .activate
+//        }
 
         if preferences.autoHideOnEsc && event.isKeyDown && event.keyCode == 53 {
             return .hide

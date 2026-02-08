@@ -5,6 +5,9 @@ private let log = Logger(subsystem: "hexdrinker.KeydeukKeydeuk", category: "Orch
 
 @MainActor
 final class AppOrchestrator {
+    private static let commandKeyCodes: Set<Int> = [54, 55]
+    private let commandDoubleTapInterval: TimeInterval = 0.35
+
     private let eventSource: EventSource
     private let evaluateActivation: EvaluateActivationUseCase
     private let showOverlay: ShowOverlayForCurrentAppUseCase
@@ -16,6 +19,8 @@ final class AppOrchestrator {
     // Hold 트리거 상태
     private var holdTimer: DispatchWorkItem?
     private var holdTriggered = false
+    private var commandPressed = false
+    private var lastCommandTapTimestamp: Date?
 
     init(
         eventSource: EventSource,
@@ -39,24 +44,17 @@ final class AppOrchestrator {
         let triggerChanged = currentPreferences.trigger != preferences.trigger
         currentPreferences = preferences
 
-        // 트리거 타입이 변경되면 진행 중인 홀드 상태 초기화
-        if triggerChanged {
+        if triggerChanged && preferences.trigger != .holdCommand {
             cancelHold()
             holdTriggered = false
-            log.info("트리거 타입 변경 → 홀드 상태 초기화")
+            log.info("기본 트리거 변경 → 홀드 상태 초기화")
         }
     }
 
     func start() {
         eventSource.onEvent = { [weak self] event in
             guard let self else { return }
-
-            switch self.currentPreferences.trigger {
-            case .holdCommand:
-                self.handleHoldCommand(event: event, duration: self.currentPreferences.holdDurationSeconds)
-            case .globalHotkey:
-                self.handleGlobalHotkey(event: event)
-            }
+            self.handleEvent(event)
         }
         eventSource.start()
     }
@@ -118,23 +116,60 @@ final class AppOrchestrator {
         holdTimer = nil
     }
 
-    // MARK: - Global Hotkey 트리거
+    // MARK: - Unified Event Handling
 
-    private func handleGlobalHotkey(event: KeyEvent) {
-        // flagsChanged 이벤트는 글로벌 핫키 모드에서는 무시
+    private func handleEvent(_ event: KeyEvent) {
+        if event.isFlagsChanged {
+            handleCommandDoubleTap(event: event)
+            commandPressed = event.modifiers.contains(.command)
+        }
+
+        if currentPreferences.trigger == .holdCommand {
+            handleHoldCommand(event: event, duration: currentPreferences.holdDurationSeconds)
+        } else {
+            cancelHold()
+            holdTriggered = false
+        }
+
         guard !event.isFlagsChanged else { return }
 
         let decision = evaluateActivation.execute(event: event, preferences: currentPreferences)
+        switch decision {
+        case .activate:
+            activateOverlay()
+        case .hide:
+            hideOverlay.execute()
+        case .ignore:
+            break
+        }
+    }
+
+    private func handleCommandDoubleTap(event: KeyEvent) {
+        guard currentPreferences.trigger == .commandDoubleTap else { return }
+        guard Self.commandKeyCodes.contains(event.keyCode) else { return }
+
+        let commandOnly = event.modifiers == .command
+        let isCommandPress = commandOnly && !commandPressed
+        guard isCommandPress else { return }
+
+        let now = Date()
+        if let lastTap = lastCommandTapTimestamp,
+           now.timeIntervalSince(lastTap) <= commandDoubleTapInterval {
+            lastCommandTapTimestamp = nil
+            cancelHold()
+            holdTriggered = false
+            log.info("⌘ 더블탭 감지 — 오버레이 표시")
+            activateOverlay()
+            return
+        }
+
+        lastCommandTapTimestamp = now
+    }
+
+    private func activateOverlay() {
         Task { @MainActor in
-            switch decision {
-            case .activate:
-                let result = await self.showOverlay.execute()
-                self.onShowResult(result)
-            case .hide:
-                self.hideOverlay.execute()
-            case .ignore:
-                break
-            }
+            let result = await showOverlay.execute()
+            onShowResult(result)
         }
     }
 }

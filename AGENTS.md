@@ -13,8 +13,8 @@ KeydeukKeydeuk는 macOS용 단축키 치트시트(오버레이) MVP 프로젝트
 현재 UX 방향(우선순위):
 1. 최초 실행 시 온보딩 화면으로 권한/초기 설정 진행
 2. 온보딩 완료 후에는 StatusBar 아이콘 중심으로 앱 사용
-3. 기본 트리거: ⌘ Command 키 1초 이상 홀드 → 오버레이 표시 (트리거 전용, 떼도 유지)
-4. 대안 트리거: 글로벌 핫키 조합(⌘⇧K 등) 토글 방식 지원
+3. 기본 트리거: ⌘ Command 홀드(1초) 또는 ⌘ Command 더블탭 중 하나 선택
+4. 커스텀 단축키 트리거는 충돌 이슈로 임시 비활성화(드롭다운 미노출)
 5. StatusBar 아이콘 좌클릭 시 오버레이 표시, 우클릭 시 메뉴 드롭다운
 6. Settings 메뉴에서 탭 기반 설정 창(General/Theme/Help)을 열어 트리거·동작·권한·테마 설정 변경
 
@@ -261,15 +261,16 @@ sequenceDiagram
 - 권한 요청 후 즉시 재확인 + 최대 20초 폴링으로 granted 자동 반영
 - 권한 미획득 시 상태바 클릭 → 프롬프트만 표시, 허용 후 복귀 시 자동 오버레이 표시
 - 권한 미획득 시 Finish Setup 버튼 비활성화
-- **기본 트리거: ⌘ Command 홀드** (1초, 0.3~3.0초 조절 가능, 트리거 전용 — 떼도 오버레이 유지)
-- 대안 트리거: 글로벌 핫키 조합(⌘⇧K 등) 토글 방식
-- 트리거 모드별 분기 처리(AppOrchestrator → holdCommand / globalHotkey)
+- **기본 트리거**: ⌘ Command 홀드 또는 ⌘ Command 더블탭 중 단일 선택
+- 홀드 모드에서만 홀드 시간(0.3~3.0초) 조절 지원
+- 트리거 모드별 분기 처리(AppOrchestrator → holdCommand / commandDoubleTap)
+- 커스텀 단축키 트리거는 충돌/안정성 이슈로 임시 비활성화(정책 로직 주석 처리, UI 미노출)
 - Preferences 변경은 Combine으로 Orchestrator에 전파 (Store 직접 참조 없음)
 - 현재 활성 앱 감지 (`NSWorkspace` 추적 + last known non-self app fallback)
 - AX API 기반 실시간 메뉴 바 단축키 추출 (AXMenuBarShortcutRepository)
 - 오버레이 표시/숨김 (NSPanel 기반 전체 화면 딤 + 멀티 컬럼 KeyCue 스타일 그리드)
 - 검색 가능한 단축키 리스트 표시
-- 핫키 프리셋/자동숨김 토글/트리거 타입/홀드 시간 설정 저장(UserDefaults)
+- 자동숨김 토글/기본 트리거 타입/홀드 시간 설정 저장(UserDefaults)
 - **테마 설정**: 통합 테마(System/Light/Dark/Graphite/Warm Paper/Nord Mist/High Contrast) 저장 및 앱 전역(온보딩/설정/오버레이) 적용
 - **테마 팔레트 중앙화**: `UI/Theme/AppTheme.swift`에서 overlay/settings 컬러 토큰 관리
 - 온보딩 완료 후 StatusBar 중심 동작(좌클릭 트리거, 우클릭 메뉴)
@@ -277,7 +278,7 @@ sequenceDiagram
 - 오버레이 상단에 현재 포커스 앱 이름/아이콘/번들ID를 표시
 - 현재 앱 카탈로그가 없더라도 빈 오버레이를 표시하고, "No shortcuts yet" 안내
 - **설정 창: 탭 기반 레이아웃 (General / Theme / Help)**
-  - General: Activation(트리거 타입·홀드 시간·핫키 프리셋), Behavior(자동숨김), Permissions(상태 뱃지·리프레시·설정 열기)
+  - General: Activation(기본 트리거 선택·홀드 시간), Behavior(자동숨김), Permissions(상태 뱃지·리프레시·설정 열기)
   - Theme: 통합 Theme 드롭다운(기본/커스텀 그룹), 중앙 Preview, 우측 하단 Save로 반영(비즉시 적용)
   - Help: placeholder (미구현)
   - 하단: Quit / Cancel / OK 버튼 바

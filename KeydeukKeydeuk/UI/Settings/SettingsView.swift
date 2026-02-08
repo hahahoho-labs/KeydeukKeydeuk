@@ -20,6 +20,9 @@ struct GeneralSettingsTab: View {
             }
             .padding(20)
         }
+        .onDisappear {
+            settingsVM.cancelCustomHotkeyCapture()
+        }
     }
 
     // MARK: - Error Banner
@@ -50,14 +53,18 @@ struct GeneralSettingsTab: View {
     private var activationSection: some View {
         SettingsSection(title: "Activation") {
             Picker(
-                "Trigger",
+                "Default Trigger",
                 selection: Binding(
-                    get: { settingsVM.selectedTriggerType },
+                    get: {
+                        settingsVM.selectedTriggerType == .commandDoubleTap
+                            ? .commandDoubleTap
+                            : .holdCommand
+                    },
                     set: { settingsVM.setTriggerType($0) }
                 )
             ) {
                 Text("Hold ⌘ Command").tag(Preferences.Trigger.holdCommand)
-                Text("Global Hotkey").tag(Preferences.Trigger.globalHotkey)
+                Text("Double-tap ⌘ Command").tag(Preferences.Trigger.commandDoubleTap)
             }
             .pickerStyle(.menu)
 
@@ -79,20 +86,9 @@ struct GeneralSettingsTab: View {
                         step: 0.1
                     )
                 }
-            } else {
-                Picker(
-                    "Global Hotkey",
-                    selection: Binding(
-                        get: { settingsVM.selectedHotkeyPresetID },
-                        set: { settingsVM.selectHotkeyPreset(id: $0) }
-                    )
-                ) {
-                    ForEach(settingsVM.hotkeyPresets) { preset in
-                        Text(preset.title).tag(preset.id)
-                    }
-                }
-                .pickerStyle(.menu)
             }
+
+            // NOTE: custom shortcut feature is temporarily disabled.
         }
     }
 
@@ -446,14 +442,14 @@ struct OnboardingTriggerSettingsView: View {
     var body: some View {
         SettingsSection(title: "Trigger Settings") {
             Picker(
-                "Trigger",
+                "Default Trigger",
                 selection: Binding(
-                    get: { viewModel.selectedTriggerType },
+                    get: { viewModel.selectedTriggerType == .commandDoubleTap ? .commandDoubleTap : .holdCommand },
                     set: { viewModel.setTriggerType($0) }
                 )
             ) {
                 Text("Hold ⌘ Command").tag(Preferences.Trigger.holdCommand)
-                Text("Global Hotkey").tag(Preferences.Trigger.globalHotkey)
+                Text("Double-tap ⌘ Command").tag(Preferences.Trigger.commandDoubleTap)
             }
             .pickerStyle(.menu)
 
@@ -475,19 +471,6 @@ struct OnboardingTriggerSettingsView: View {
                         step: 0.1
                     )
                 }
-            } else {
-                Picker(
-                    "Global Hotkey",
-                    selection: Binding(
-                        get: { viewModel.selectedHotkeyPresetID },
-                        set: { viewModel.selectHotkeyPreset(id: $0) }
-                    )
-                ) {
-                    ForEach(viewModel.hotkeyPresets) { preset in
-                        Text(preset.title).tag(preset.id)
-                    }
-                }
-                .pickerStyle(.menu)
             }
         }
     }

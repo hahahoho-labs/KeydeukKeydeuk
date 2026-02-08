@@ -22,7 +22,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Onboarding")
                 .font(.headline)
-            Text("Grant Accessibility permission and configure trigger settings.")
+            Text("Grant Accessibility permission and choose a default activation trigger (hold ⌘ or double-tap ⌘).")
                 .foregroundStyle(.secondary)
             Text(permissionStatusText)
                 .font(.callout.weight(.semibold))

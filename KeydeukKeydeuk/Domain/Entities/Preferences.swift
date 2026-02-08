@@ -1,9 +1,22 @@
 import Foundation
 
 struct Preferences: Codable, Equatable {
+    struct HotkeyBinding: Codable, Equatable, Identifiable {
+        var keyCode: Int
+        var modifiersRawValue: Int
+
+        var id: String { "\(keyCode)-\(modifiersRawValue)" }
+        var modifiers: KeyModifiers { KeyModifiers(rawValue: modifiersRawValue) }
+
+        func matches(_ event: KeyEvent) -> Bool {
+            event.keyCode == keyCode && event.modifiers == modifiers
+        }
+    }
+
     enum Trigger: String, Codable {
         case holdCommand
-        case globalHotkey
+        case commandDoubleTap
+        case customShortcut
     }
 
     enum ThemeMode: String, Codable, CaseIterable {
@@ -78,8 +91,7 @@ struct Preferences: Codable, Equatable {
     }
 
     var trigger: Trigger
-    var hotkeyKeyCode: Int
-    var hotkeyModifiersRawValue: Int
+    var customHotkeys: [HotkeyBinding]
     var holdDurationSeconds: Double
     var autoHideOnAppSwitch: Bool
     var autoHideOnEsc: Bool
@@ -89,14 +101,9 @@ struct Preferences: Codable, Equatable {
     var themeMode: ThemeMode { theme.mode }
     var themePreset: ThemePreset { theme.preset }
 
-    var hotkeyModifiers: KeyModifiers {
-        KeyModifiers(rawValue: hotkeyModifiersRawValue)
-    }
-
     init(
         trigger: Trigger,
-        hotkeyKeyCode: Int,
-        hotkeyModifiersRawValue: Int,
+        customHotkeys: [HotkeyBinding],
         holdDurationSeconds: Double,
         autoHideOnAppSwitch: Bool,
         autoHideOnEsc: Bool,
@@ -104,8 +111,7 @@ struct Preferences: Codable, Equatable {
         hasCompletedOnboarding: Bool
     ) {
         self.trigger = trigger
-        self.hotkeyKeyCode = hotkeyKeyCode
-        self.hotkeyModifiersRawValue = hotkeyModifiersRawValue
+        self.customHotkeys = customHotkeys
         self.holdDurationSeconds = holdDurationSeconds
         self.autoHideOnAppSwitch = autoHideOnAppSwitch
         self.autoHideOnEsc = autoHideOnEsc
@@ -115,8 +121,7 @@ struct Preferences: Codable, Equatable {
 
     static let `default` = Preferences(
         trigger: .holdCommand,
-        hotkeyKeyCode: 40,
-        hotkeyModifiersRawValue: KeyModifiers.command.union(.shift).rawValue,
+        customHotkeys: [],
         holdDurationSeconds: 1.0,
         autoHideOnAppSwitch: true,
         autoHideOnEsc: true,
@@ -126,6 +131,7 @@ struct Preferences: Codable, Equatable {
 
     private enum CodingKeys: String, CodingKey {
         case trigger
+        case customHotkeys
         case hotkeyKeyCode
         case hotkeyModifiersRawValue
         case holdDurationSeconds
@@ -141,9 +147,25 @@ struct Preferences: Codable, Equatable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let defaults = Preferences.default
 
-        trigger = try container.decodeIfPresent(Trigger.self, forKey: .trigger) ?? defaults.trigger
-        hotkeyKeyCode = try container.decodeIfPresent(Int.self, forKey: .hotkeyKeyCode) ?? defaults.hotkeyKeyCode
-        hotkeyModifiersRawValue = try container.decodeIfPresent(Int.self, forKey: .hotkeyModifiersRawValue) ?? defaults.hotkeyModifiersRawValue
+        if let rawTrigger = try container.decodeIfPresent(String.self, forKey: .trigger) {
+            if rawTrigger == "globalHotkey" {
+                trigger = .customShortcut
+            } else {
+                trigger = Trigger(rawValue: rawTrigger) ?? defaults.trigger
+            }
+        } else {
+            trigger = defaults.trigger
+        }
+        customHotkeys = try container.decodeIfPresent([HotkeyBinding].self, forKey: .customHotkeys) ?? defaults.customHotkeys
+
+        // Legacy migration: globalHotkey 모드로 쓰던 단일 핫키를 customHotkeys로 이전
+        if customHotkeys.isEmpty,
+           trigger == .commandDoubleTap,
+           let legacyKeyCode = try container.decodeIfPresent(Int.self, forKey: .hotkeyKeyCode),
+           let legacyModifiersRawValue = try container.decodeIfPresent(Int.self, forKey: .hotkeyModifiersRawValue) {
+            customHotkeys = [HotkeyBinding(keyCode: legacyKeyCode, modifiersRawValue: legacyModifiersRawValue)]
+        }
+
         holdDurationSeconds = try container.decodeIfPresent(Double.self, forKey: .holdDurationSeconds) ?? defaults.holdDurationSeconds
         autoHideOnAppSwitch = try container.decodeIfPresent(Bool.self, forKey: .autoHideOnAppSwitch) ?? defaults.autoHideOnAppSwitch
         autoHideOnEsc = try container.decodeIfPresent(Bool.self, forKey: .autoHideOnEsc) ?? defaults.autoHideOnEsc
@@ -160,8 +182,7 @@ struct Preferences: Codable, Equatable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(trigger, forKey: .trigger)
-        try container.encode(hotkeyKeyCode, forKey: .hotkeyKeyCode)
-        try container.encode(hotkeyModifiersRawValue, forKey: .hotkeyModifiersRawValue)
+        try container.encode(customHotkeys, forKey: .customHotkeys)
         try container.encode(holdDurationSeconds, forKey: .holdDurationSeconds)
         try container.encode(autoHideOnAppSwitch, forKey: .autoHideOnAppSwitch)
         try container.encode(autoHideOnEsc, forKey: .autoHideOnEsc)
