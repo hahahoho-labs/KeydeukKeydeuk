@@ -1,9 +1,11 @@
 # AGENTS.md
 
 ## 프로젝트 개요
+
 KeydeukKeydeuk는 macOS용 단축키 치트시트(오버레이) MVP 프로젝트다.
 
 핵심 목표:
+
 - Clean Architecture 원칙 유지
 - SwiftUI + MVVM 적용
 - 기능 단위 분리(FSD 정신) 반영
@@ -11,6 +13,7 @@ KeydeukKeydeuk는 macOS용 단축키 치트시트(오버레이) MVP 프로젝트
 - 이후 StoreKit 확장을 고려한 구조 유지
 
 현재 UX 방향(우선순위):
+
 1. 최초 실행 시 온보딩 화면으로 권한/초기 설정 진행
 2. 온보딩 완료 후에는 StatusBar 아이콘 중심으로 앱 사용
 3. 기본 트리거: ⌘ Command 홀드(1초) 또는 ⌘ Command 더블탭 중 하나 선택
@@ -19,6 +22,7 @@ KeydeukKeydeuk는 macOS용 단축키 치트시트(오버레이) MVP 프로젝트
 6. Settings 메뉴에서 탭 기반 설정 창(General/Theme/Help)을 열어 트리거·동작·권한·테마 설정 변경
 
 ## 아키텍처 원칙
+
 - Domain은 정책/규칙만 가진다.
 - Domain은 SwiftUI, AppKit, AX API, UserDefaults, StoreKit 같은 구현 디테일을 모른다.
 - UseCase(Application)는 시나리오를 조합한다.
@@ -26,8 +30,10 @@ KeydeukKeydeuk는 macOS용 단축키 치트시트(오버레이) MVP 프로젝트
 - Platform/Data는 Domain Protocol(Port)을 구현한다.
 - ViewModel은 액터(사용자 역할)별로 분리한다(SRP).
 - Orchestrator는 저장소(Store)를 직접 참조하지 않고, 값 객체(Value Object)만 의존한다.
+- ARCHITECTURE.md 파일을 참고하여 아키텍처와 원칙에 위배되지 않는 코드를 생산한다.
 
 ## 현재 폴더 구조(단일 타겟)
+
 ```text
 KeydeukKeydeuk/
   App/
@@ -99,6 +105,7 @@ KeydeukKeydeuk/
 ```
 
 ## 레이어 책임
+
 - App
   - DI 조립, 앱 부트스트랩, 유스케이스 오케스트레이션, 라우팅
   - AppOrchestrator: 키보드 이벤트 수신 → 트리거 분기 → UseCase 실행
@@ -120,6 +127,7 @@ KeydeukKeydeuk/
     - OnboardingViewModel: 권한 상태 관리, 온보딩 완료 흐름
 
 ## 정적 의존성(컴파일 타임)
+
 ```mermaid
 flowchart LR
   UI["UI (SwiftUI + MVVM)"] --> APP["Application (UseCases)"]
@@ -135,6 +143,7 @@ flowchart LR
 ```
 
 의존성 규칙:
+
 - `UI -> Application -> Domain`
 - `Data/Platform -> Domain` (Protocol 구현)
 - Domain은 바깥 레이어에 의존하지 않는다.
@@ -142,6 +151,7 @@ flowchart LR
 - EvaluateActivationUseCase도 PreferencesStore 대신 Preferences를 파라미터로 받는다.
 
 ## 런타임 제어 흐름(입력 -> 오버레이)
+
 ```mermaid
 sequenceDiagram
   participant ES as Platform.EventSource
@@ -179,6 +189,7 @@ sequenceDiagram
 ```
 
 ## 런타임 제어 흐름(Preferences 전파)
+
 ```mermaid
 sequenceDiagram
   participant UI as UI.Settings
@@ -200,6 +211,7 @@ sequenceDiagram
 ```
 
 ## 런타임 제어 흐름(온보딩)
+
 ```mermaid
 sequenceDiagram
   participant UI as UI.Onboarding
@@ -227,6 +239,7 @@ sequenceDiagram
 ```
 
 ## 런타임 제어 흐름(StatusBar)
+
 ```mermaid
 sequenceDiagram
   participant SB as Platform.StatusBarController
@@ -256,6 +269,7 @@ sequenceDiagram
 ```
 
 ## 현재 MVP 범위
+
 - 접근성 권한 상태 확인 및 설정 창/온보딩에서 실시간 자동 갱신(didBecomeActiveNotification)
 - 온보딩 접근성 섹션은 `Request Permission` 단일 버튼으로 단순화
 - 권한 요청 후 즉시 재확인 + 최대 20초 폴링으로 granted 자동 반영
@@ -288,6 +302,7 @@ sequenceDiagram
 - **ViewModel SRP**: OverlayViewModel / SettingsViewModel / OnboardingViewModel 분리
 
 ## 확장 포인트
+
 - Theme 탭 확장 (커스텀 팔레트/타이포/레이아웃 프리셋)
 - Help 탭 구현 (사용 가이드, FAQ, 버전 정보)
 - Overlay를 실제 NSWindow 레벨/포지션 제어로 확장
@@ -299,6 +314,7 @@ sequenceDiagram
 - 테스트 코드 추가 (Domain/Policy, UseCase 단위 테스트)
 
 ## 구현 시 주의사항
+
 - ViewModel이 Platform 구현체를 직접 참조하지 않기
 - Domain 타입에 UI/AppKit 타입 섞지 않기
 - UseCase가 정책 대신 메커니즘 코드를 직접 품지 않기
