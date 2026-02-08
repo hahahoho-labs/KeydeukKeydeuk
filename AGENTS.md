@@ -95,6 +95,7 @@ KeydeukKeydeuk/
     Theme/
       AppTheme.swift                # 통합 테마 적용 + 컬러 팔레트 레지스트리
       ThemeModeStore.swift          # 현재 테마 상태 전파용 읽기 모델
+      DisabledButtonAppearance.swift # 비활성(disabled) 버튼 가시성 보정 모디파이어
 ```
 
 ## 레이어 책임
@@ -206,22 +207,19 @@ sequenceDiagram
   participant SVM as SettingsViewModel
   participant GP as UseCase.GetPermissionState
   participant RP as UseCase.RequestPermission
-  participant OA as UseCase.OpenAccessibilitySettings
   participant UP as UseCase.UpdatePreferences
 
   UI->>OVM: 화면 진입
   OVM->>GP: 접근성 권한 상태 확인
   OVM-->>UI: 권한 상태 반영
+  Note over OVM: didBecomeActiveNotification 구독으로<br/>앱 복귀 시 권한 상태 자동 동기화
 
   UI->>SVM: 트리거 설정 변경
   SVM->>UP: execute(updatedPreferences)
 
   UI->>OVM: 권한 요청 버튼 탭
   OVM->>RP: execute()
-  OVM->>GP: 권한 상태 재확인
-
-  UI->>OVM: 접근성 설정 열기
-  OVM->>OA: execute()
+  OVM->>GP: 즉시 재확인 + 최대 20초 폴링 재확인
 
   UI->>OVM: Finish Setup 탭
   OVM->>GP: 권한 상태 재확인
@@ -259,7 +257,8 @@ sequenceDiagram
 
 ## 현재 MVP 범위
 - 접근성 권한 상태 확인 및 설정 창/온보딩에서 실시간 자동 갱신(didBecomeActiveNotification)
-- 권한 요청 프롬프트 + 시스템 설정 열기를 단일 버튼으로 통합
+- 온보딩 접근성 섹션은 `Request Permission` 단일 버튼으로 단순화
+- 권한 요청 후 즉시 재확인 + 최대 20초 폴링으로 granted 자동 반영
 - 권한 미획득 시 상태바 클릭 → 프롬프트만 표시, 허용 후 복귀 시 자동 오버레이 표시
 - 권한 미획득 시 Finish Setup 버튼 비활성화
 - **기본 트리거: ⌘ Command 홀드** (1초, 0.3~3.0초 조절 가능, 트리거 전용 — 떼도 오버레이 유지)
@@ -284,6 +283,7 @@ sequenceDiagram
   - 하단: Quit / Cancel / OK 버튼 바
   - 설정 저장 실패 시 인라인 에러 배너 표시
 - **에러 핸들링**: os.Logger 진단 로그 + 인라인 UI 피드백 + graceful degradation
+- **비활성 버튼 가시성**: 공통 모디파이어(`applyDisabledButtonAppearance`)로 disabled 상태 명도/채도 하향
 - **ViewModel SRP**: OverlayViewModel / SettingsViewModel / OnboardingViewModel 분리
 
 ## 확장 포인트

@@ -52,9 +52,6 @@ struct SettingsWindowView: View {
         .onAppear {
             onboardingVM.refreshPermissionState()
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            onboardingVM.refreshPermissionState()
-        }
     }
 
     // MARK: - Tab Bar

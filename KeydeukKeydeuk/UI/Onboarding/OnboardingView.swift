@@ -3,8 +3,6 @@ import SwiftUI
 struct OnboardingView: View {
     let permissionState: PermissionState
     let requestPermissionPrompt: () -> Void
-    let openAccessibilitySettings: () -> Void
-    let refreshPermissionState: () -> Void
     @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
     @Environment(\.appThemePreset) private var appThemePreset
 
@@ -34,16 +32,6 @@ struct OnboardingView: View {
                     requestPermissionPrompt()
                 }
                 .buttonStyle(.borderedProminent)
-
-                Button("Open Accessibility Settings") {
-                    openAccessibilitySettings()
-                }
-                .buttonStyle(.bordered)
-
-                Button("Refresh Status") {
-                    refreshPermissionState()
-                }
-                .buttonStyle(.bordered)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

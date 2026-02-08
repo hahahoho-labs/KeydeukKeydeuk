@@ -19,12 +19,6 @@ struct RootView: View {
                 permissionState: onboardingVM.permissionState,
                 requestPermissionPrompt: {
                     onboardingVM.requestAccessibilityPermissionPrompt()
-                },
-                openAccessibilitySettings: {
-                    onboardingVM.openAccessibilityPreferences()
-                },
-                refreshPermissionState: {
-                    onboardingVM.refreshPermissionState()
                 }
             )
 
@@ -37,6 +31,7 @@ struct RootView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(!onboardingVM.canFinishOnboarding)
+                .applyDisabledButtonAppearance()
             }
         }
         .padding(20)

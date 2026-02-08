@@ -247,6 +247,7 @@ struct ThemeSettingsTab: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(!hasPendingThemeChange)
+                    .applyDisabledButtonAppearance()
                 }
             }
             .padding(20)
