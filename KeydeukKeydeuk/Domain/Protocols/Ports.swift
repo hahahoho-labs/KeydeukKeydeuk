@@ -37,3 +37,11 @@ protocol OverlayPresenter {
 protocol BillingService {
     func hasProAccess() async -> Bool
 }
+
+protocol FeedbackSubmissionService {
+    func submit(_ feedback: FeedbackSubmission) async throws -> FeedbackSubmissionResult
+}
+
+protocol FeedbackDiagnosticsProvider {
+    func currentDiagnostics() -> FeedbackDiagnostics
+}

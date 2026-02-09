@@ -11,6 +11,7 @@ final class AppContainer {
     let overlayViewModel: OverlayViewModel
     let settingsViewModel: SettingsViewModel
     let onboardingViewModel: OnboardingViewModel
+    let feedbackViewModel: FeedbackViewModel
     let themeModeStore: ThemeModeStore
 
     private var orchestrator: AppOrchestrator?
@@ -50,6 +51,12 @@ final class AppContainer {
         let hideOverlay = HideOverlayUseCase(presenter: overlayPresenter)
         let updatePreferences = UpdatePreferencesUseCase(preferencesStore: preferencesStore)
         let openAccessibilitySettings = OpenAccessibilitySettingsUseCase(permissionGuide: permissionGuide)
+        let feedbackDiagnosticsProvider = AppFeedbackDiagnosticsProvider()
+        let feedbackSubmissionService = SupabaseFeedbackService()
+        let submitFeedback = SubmitFeedbackUseCase(
+            feedbackSubmissionService: feedbackSubmissionService,
+            diagnosticsProvider: feedbackDiagnosticsProvider
+        )
 
         // ViewModel 조립
         self.overlayViewModel = OverlayViewModel(
@@ -72,6 +79,9 @@ final class AppContainer {
             requestAccessibilityPermission: requestAccessibilityPermission,
             openAccessibilitySettings: openAccessibilitySettings,
             updatePreferences: updatePreferences
+        )
+        self.feedbackViewModel = FeedbackViewModel(
+            submitFeedbackUseCase: submitFeedback
         )
 
         self.overlayPanelController = OverlayPanelController(
@@ -216,6 +226,7 @@ final class AppContainer {
             rootView: SettingsWindowView(
                 settingsVM: settingsViewModel,
                 onboardingVM: onboardingViewModel,
+                feedbackVM: feedbackViewModel,
                 themeModeStore: themeModeStore
             )
         )

@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 // MARK: - General Tab
@@ -389,26 +390,382 @@ private struct ThemePreviewColumn: View {
     }
 }
 
-// MARK: - Help Tab (Placeholder)
+// MARK: - Help Tab
 
 struct HelpSettingsTab: View {
+    @ObservedObject var feedbackVM: FeedbackViewModel
+    @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
+    @Environment(\.appThemePreset) private var appThemePreset
+
+    private var palette: ThemePalette {
+        ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
+    }
+
+    private var inputBackground: Color {
+        palette.overlaySearchBackground
+    }
+
+    private var inputBorder: Color {
+        palette.overlayPanelBorder.opacity(0.9)
+    }
+
+    private var inputCornerRadius: CGFloat {
+        8
+    }
+
     var body: some View {
-        VStack {
-            Spacer()
-            VStack(spacing: 8) {
-                Image(systemName: "questionmark.circle")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.secondary)
-                Text("Help & About")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                Text("Usage guide, FAQ, and version information.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                SettingsSection(title: "Send Feedback") {
+                    Text("Share suggestions or report issues. Title is limited to \(feedbackVM.maxTitleLength) characters and message to \(feedbackVM.maxMessageLength) characters.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Email (optional)")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        TextField(
+                            "you@example.com",
+                            text: Binding(
+                                get: { feedbackVM.email },
+                                set: { feedbackVM.setEmail($0) }
+                            )
+                        )
+                            .textFieldStyle(.plain)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(
+                                RoundedRectangle(cornerRadius: inputCornerRadius, style: .continuous)
+                                    .fill(inputBackground)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: inputCornerRadius, style: .continuous)
+                                    .stroke(inputBorder, lineWidth: 1)
+                            )
+                            .textContentType(.emailAddress)
+
+                        if feedbackVM.hasInvalidEmail {
+                            Text("Please enter a valid email format.")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("Title")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text(feedbackVM.titleCountText)
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+
+                        FeedbackSingleLineTextField(
+                            text: Binding(
+                                get: { feedbackVM.title },
+                                set: { feedbackVM.setTitle($0) }
+                            ),
+                            placeholder: "Short summary",
+                            maxLength: feedbackVM.maxTitleLength
+                        )
+                            .textFieldStyle(.plain)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(
+                                RoundedRectangle(cornerRadius: inputCornerRadius, style: .continuous)
+                                    .fill(inputBackground)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: inputCornerRadius, style: .continuous)
+                                    .stroke(inputBorder, lineWidth: 1)
+                            )
+                    }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("Message")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text(feedbackVM.messageCountText)
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+
+                        FeedbackMessageInput(
+                            text: Binding(
+                                get: { feedbackVM.message },
+                                set: { feedbackVM.setMessage($0) }
+                            ),
+                            placeholder: "Tell us what happened and what you expected.",
+                            maxLength: feedbackVM.maxMessageLength,
+                            background: inputBackground,
+                            border: inputBorder,
+                            cornerRadius: inputCornerRadius
+                        )
+                        .frame(minHeight: 178)
+                    }
+
+                    HStack {
+                        Spacer()
+                        Button {
+                            Task {
+                                await feedbackVM.submit()
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                if feedbackVM.isSubmitting {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                }
+                                Text(feedbackVM.isSubmitting ? "Submitting..." : "Submit Feedback")
+                            }
+                        }
+                        .disabled(!feedbackVM.canSubmit)
+                        .applyDisabledButtonAppearance()
+                    }
+
+                    if let successMessage = feedbackVM.successMessage {
+                        Text(successMessage)
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                    }
+
+                    if let errorMessage = feedbackVM.errorMessage {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                }
             }
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(20)
+    }
+}
+
+private struct FeedbackSingleLineTextField: NSViewRepresentable {
+    @Binding var text: String
+    let placeholder: String
+    let maxLength: Int
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text, maxLength: maxLength)
+    }
+
+    func makeNSView(context: Context) -> NSTextField {
+        let field = NSTextField(string: "")
+        field.isBordered = false
+        field.bezelStyle = .squareBezel
+        field.focusRingType = .none
+        field.drawsBackground = false
+        field.isBezeled = false
+        field.isEditable = true
+        field.isSelectable = true
+        field.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        field.textColor = NSColor.labelColor
+        field.delegate = context.coordinator
+        field.placeholderString = placeholder
+        field.stringValue = text
+        return field
+    }
+
+    func updateNSView(_ nsView: NSTextField, context: Context) {
+        context.coordinator.maxLength = maxLength
+
+        if nsView.placeholderString != placeholder {
+            nsView.placeholderString = placeholder
+        }
+
+        if nsView.stringValue != text {
+            context.coordinator.isProgrammaticUpdate = true
+            nsView.stringValue = text
+            context.coordinator.isProgrammaticUpdate = false
+        }
+    }
+
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        @Binding private var text: String
+        var maxLength: Int
+        var isProgrammaticUpdate = false
+
+        init(text: Binding<String>, maxLength: Int) {
+            _text = text
+            self.maxLength = maxLength
+        }
+
+        func controlTextDidChange(_ obj: Notification) {
+            guard !isProgrammaticUpdate,
+                  let field = obj.object as? NSTextField else { return }
+
+            if let editor = field.currentEditor() as? NSTextView, editor.hasMarkedText() {
+                return
+            }
+
+            applyLimitAndSync(field)
+        }
+
+        func controlTextDidEndEditing(_ obj: Notification) {
+            guard let field = obj.object as? NSTextField else { return }
+            applyLimitAndSync(field)
+        }
+
+        private func applyLimitAndSync(_ field: NSTextField) {
+            var value = field.stringValue
+            if value.count > maxLength {
+                value = String(value.prefix(maxLength))
+                field.stringValue = value
+            }
+            text = value
+        }
+    }
+}
+
+private struct FeedbackMessageInput: View {
+    @Binding var text: String
+    let placeholder: String
+    let maxLength: Int
+    let background: Color
+    let border: Color
+    let cornerRadius: CGFloat
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            FeedbackMessageTextEditor(
+                text: $text,
+                maxLength: maxLength
+            )
+
+            if text.isEmpty {
+                Text(placeholder)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 11)
+                    .padding(.top, 9)
+                    .allowsHitTesting(false)
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(background)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .stroke(border, lineWidth: 1)
+        )
+    }
+}
+
+private struct FeedbackMessageTextEditor: NSViewRepresentable {
+    @Binding var text: String
+    let maxLength: Int
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text, maxLength: maxLength)
+    }
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSTextView.scrollableTextView()
+        scrollView.borderType = .noBorder
+        scrollView.drawsBackground = false
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+
+        guard let textView = scrollView.documentView as? NSTextView else {
+            return scrollView
+        }
+
+        textView.isRichText = false
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.usesAdaptiveColorMappingForDarkAppearance = true
+        textView.allowsUndo = true
+        textView.drawsBackground = false
+        textView.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        textView.textColor = NSColor.labelColor
+        textView.textContainerInset = NSSize(width: 6, height: 8)
+        textView.delegate = context.coordinator
+        textView.string = text
+
+        return scrollView
+    }
+
+    func updateNSView(_ nsView: NSScrollView, context _: Context) {
+        guard let textView = nsView.documentView as? NSTextView else {
+            return
+        }
+
+        if textView.string != text {
+            textView.string = text
+        }
+    }
+
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        @Binding private var text: String
+        private let maxLength: Int
+
+        init(text: Binding<String>, maxLength: Int) {
+            _text = text
+            self.maxLength = maxLength
+        }
+
+        func textView(
+            _ textView: NSTextView,
+            shouldChangeTextIn affectedCharRange: NSRange,
+            replacementString: String?
+        ) -> Bool {
+            guard let replacementString else { return true }
+
+            let currentText = textView.string
+            let currentNSString = currentText as NSString
+            let nextText = currentNSString.replacingCharacters(
+                in: affectedCharRange,
+                with: replacementString
+            )
+
+            if nextText.count <= maxLength {
+                return true
+            }
+
+            let replacedText = currentNSString.substring(with: affectedCharRange)
+            let availableCount = maxLength - (currentText.count - replacedText.count)
+            guard availableCount > 0 else { return false }
+
+            let allowedText = String(replacementString.prefix(availableCount))
+            guard !allowedText.isEmpty else { return false }
+
+            let cappedText = currentNSString.replacingCharacters(in: affectedCharRange, with: allowedText)
+            textView.string = cappedText
+            textView.setSelectedRange(
+                NSRange(
+                    location: affectedCharRange.location + (allowedText as NSString).length,
+                    length: 0
+                )
+            )
+            text = cappedText
+            return false
+        }
+
+        func textDidChange(_ notification: Notification) {
+            guard let textView = notification.object as? NSTextView else {
+                return
+            }
+
+            if textView.string.count > maxLength {
+                let capped = String(textView.string.prefix(maxLength))
+                textView.string = capped
+                textView.setSelectedRange(NSRange(location: (capped as NSString).length, length: 0))
+                text = capped
+                return
+            }
+
+            text = textView.string
+        }
     }
 }
 

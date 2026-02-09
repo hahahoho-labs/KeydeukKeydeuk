@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsWindowView: View {
     @ObservedObject var settingsVM: SettingsViewModel
     @ObservedObject var onboardingVM: OnboardingViewModel
+    @ObservedObject var feedbackVM: FeedbackViewModel
     @ObservedObject var themeModeStore: ThemeModeStore
     @State private var selectedTab: SettingsTab = .general
 
@@ -102,7 +103,7 @@ struct SettingsWindowView: View {
         case .theme:
             ThemeSettingsTab(settingsVM: settingsVM)
         case .help:
-            HelpSettingsTab()
+            HelpSettingsTab(feedbackVM: feedbackVM)
         }
     }
 
