@@ -10,6 +10,7 @@ struct SupabaseFeedbackService: FeedbackSubmissionService {
     enum Error: LocalizedError {
         case missingEndpoint
         case invalidResponse
+        case rateLimited(retryAfterSeconds: Int)
         case server(statusCode: Int, message: String)
 
         var errorDescription: String? {
@@ -18,6 +19,9 @@ struct SupabaseFeedbackService: FeedbackSubmissionService {
                 return "Feedback endpoint is not configured."
             case .invalidResponse:
                 return "Feedback server returned an invalid response."
+            case let .rateLimited(retryAfterSeconds):
+                let minutes = max(1, Int(ceil(Double(retryAfterSeconds) / 60.0)))
+                return "You can send feedback once every 12 hours. Please try again in about \(minutes) minute(s)."
             case let .server(statusCode, message):
                 if message.isEmpty {
                     return "Feedback request failed (\(statusCode))."
@@ -68,7 +72,15 @@ struct SupabaseFeedbackService: FeedbackSubmissionService {
         }
 
         guard [200, 201, 202, 207].contains(httpResponse.statusCode) else {
-            let message = Self.readServerMessage(from: data)
+            let errorBody = Self.parseServerError(from: data)
+            let message = errorBody.message
+
+            if httpResponse.statusCode == 429 {
+                throw Error.rateLimited(
+                    retryAfterSeconds: errorBody.retryAfterSeconds ?? (12 * 60 * 60)
+                )
+            }
+
             if httpResponse.statusCode == 401 && message.lowercased().contains("missing authorization header") {
                 throw Error.server(
                     statusCode: 401,
@@ -79,17 +91,14 @@ struct SupabaseFeedbackService: FeedbackSubmissionService {
         }
 
         guard !data.isEmpty else {
-            return FeedbackSubmissionResult(submissionID: nil, githubIssueURL: nil)
+            return FeedbackSubmissionResult(submissionID: nil)
         }
 
         guard let body = try? JSONDecoder().decode(ResponseBody.self, from: data) else {
-            return FeedbackSubmissionResult(submissionID: nil, githubIssueURL: nil)
+            return FeedbackSubmissionResult(submissionID: nil)
         }
 
-        return FeedbackSubmissionResult(
-            submissionID: body.submissionID,
-            githubIssueURL: body.githubIssueURL.flatMap(URL.init(string:))
-        )
+        return FeedbackSubmissionResult(submissionID: body.submissionID)
     }
 
     nonisolated private static func defaultEndpointURL() -> URL? {
@@ -122,19 +131,22 @@ struct SupabaseFeedbackService: FeedbackSubmissionService {
         return nil
     }
 
-    private static func readServerMessage(from data: Data) -> String {
-        guard !data.isEmpty else { return "" }
-
-        if let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            if let message = jsonObject["message"] as? String {
-                return message
-            }
-            if let error = jsonObject["error"] as? String {
-                return error
-            }
+    private static func parseServerError(from data: Data) -> ParsedServerError {
+        guard !data.isEmpty else {
+            return ParsedServerError(message: "", retryAfterSeconds: nil)
         }
 
-        return String(data: data, encoding: .utf8) ?? ""
+        if let decoded = try? JSONDecoder().decode(ServerErrorBody.self, from: data) {
+            return ParsedServerError(
+                message: decoded.message ?? decoded.error ?? "",
+                retryAfterSeconds: decoded.retryAfterSeconds ?? decoded.retryAfterSecondsSnake
+            )
+        }
+
+        return ParsedServerError(
+            message: String(data: data, encoding: .utf8) ?? "",
+            retryAfterSeconds: nil
+        )
     }
 }
 
@@ -148,6 +160,7 @@ private struct RequestBody: Encodable {
     let osName: String
     let localeIdentifier: String
     let bundleID: String
+    let installationId: String
 
     init(feedback: FeedbackSubmission) {
         email = feedback.draft.email
@@ -159,15 +172,33 @@ private struct RequestBody: Encodable {
         osName = feedback.diagnostics.osName
         localeIdentifier = feedback.diagnostics.localeIdentifier
         bundleID = feedback.diagnostics.bundleID
+        installationId = feedback.installationID
     }
 }
 
 private struct ResponseBody: Decodable {
     let submissionID: String?
-    let githubIssueURL: String?
 
     enum CodingKeys: String, CodingKey {
         case submissionID = "submissionId"
-        case githubIssueURL = "githubIssueUrl"
     }
+}
+
+private struct ServerErrorBody: Decodable {
+    let message: String?
+    let error: String?
+    let retryAfterSeconds: Int?
+    let retryAfterSecondsSnake: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case message
+        case error
+        case retryAfterSeconds
+        case retryAfterSecondsSnake = "retry_after_seconds"
+    }
+}
+
+private struct ParsedServerError {
+    let message: String
+    let retryAfterSeconds: Int?
 }

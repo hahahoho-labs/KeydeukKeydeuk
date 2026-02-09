@@ -29,13 +29,16 @@ struct SubmitFeedbackUseCase {
 
     private let feedbackSubmissionService: FeedbackSubmissionService
     private let diagnosticsProvider: FeedbackDiagnosticsProvider
+    private let installationIDProvider: InstallationIDProvider
 
     init(
         feedbackSubmissionService: FeedbackSubmissionService,
-        diagnosticsProvider: FeedbackDiagnosticsProvider
+        diagnosticsProvider: FeedbackDiagnosticsProvider,
+        installationIDProvider: InstallationIDProvider
     ) {
         self.feedbackSubmissionService = feedbackSubmissionService
         self.diagnosticsProvider = diagnosticsProvider
+        self.installationIDProvider = installationIDProvider
     }
 
     func execute(draft: FeedbackDraft) async throws -> FeedbackSubmissionResult {
@@ -44,7 +47,8 @@ struct SubmitFeedbackUseCase {
 
         let submission = FeedbackSubmission(
             draft: normalizedDraft,
-            diagnostics: diagnosticsProvider.currentDiagnostics()
+            diagnostics: diagnosticsProvider.currentDiagnostics(),
+            installationID: installationIDProvider.currentInstallationID()
         )
         return try await feedbackSubmissionService.submit(submission)
     }

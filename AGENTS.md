@@ -45,6 +45,7 @@ KeydeukKeydeuk/
     Entities/
       Activation.swift          # KeyModifiers, KeyEvent, ActivationDecision
       AppContext.swift           # 앱 컨텍스트 (bundleID, appName)
+      Feedback.swift             # 피드백 도메인 모델/제약 (draft, diagnostics, submission)
       Permission.swift           # PermissionState, PermissionRequirement
       Preferences.swift          # 사용자 설정 (트리거, 핫키, 동작, 통합 테마, 온보딩)
       Shortcut.swift             # 단축키 항목
@@ -54,7 +55,9 @@ KeydeukKeydeuk/
     Protocols/
       Ports.swift                # EventSource, PermissionChecker, PermissionGuide,
                                  # PreferencesStore, ShortcutRepository,
-                                 # AppContextProvider, OverlayPresenter, BillingService
+                                 # AppContextProvider, OverlayPresenter, BillingService,
+                                 # FeedbackSubmissionService, FeedbackDiagnosticsProvider,
+                                 # InstallationIDProvider
   Application/
     UseCases/
       EvaluateActivationUseCase.swift
@@ -65,6 +68,7 @@ KeydeukKeydeuk/
       OpenAccessibilitySettingsUseCase.swift
       RequestAccessibilityPermissionUseCase.swift
       ShowOverlayForCurrentAppUseCase.swift
+      SubmitFeedbackUseCase.swift
       UpdatePreferencesUseCase.swift
   Data/
     Stores/
@@ -72,6 +76,10 @@ KeydeukKeydeuk/
   Platform/
     AppContext/
       NSWorkspaceAppContextProvider.swift  # 전면 앱 감지
+    Feedback/
+      AppFeedbackDiagnosticsProvider.swift       # 앱/OS/Locale 진단 정보 수집
+      SupabaseFeedbackService.swift              # 피드백 API 전송 + 서버 에러 매핑
+      UserDefaultsInstallationIDProvider.swift   # 설치 단위 installation_id 생성/보관
     Input/
       NSEventGlobalHotkeySource.swift      # 글로벌/로컬 키보드 이벤트 모니터
     MenuBar/
@@ -95,6 +103,7 @@ KeydeukKeydeuk/
       OverlayViewModel.swift        # 오버레이 표시/숨김, 검색/필터링
       RootView.swift                # 온보딩 루트 뷰
     Settings/
+      FeedbackViewModel.swift      # 피드백 폼 상태/검증/제출
       SettingsView.swift            # General/Theme/Help 탭 + 공용 섹션 컴포넌트
       SettingsViewModel.swift       # 트리거/핫키/동작 설정 관리
       SettingsWindowView.swift      # 탭 기반 설정 창 컨테이너
@@ -114,17 +123,18 @@ KeydeukKeydeuk/
   - Entity/Value Object, 정책(Policy), 포트(Protocol)
   - 순수 Swift, 외부 프레임워크 의존 없음
 - Application
-  - 유스케이스 9개: EvaluateActivation, Show/Hide Overlay, LoadShortcuts, LoadPreferences, UpdatePreferences, OpenAccessibilitySettings, GetAccessibilityPermissionState, RequestAccessibilityPermission
+  - 유스케이스 10개: EvaluateActivation, Show/Hide Overlay, LoadShortcuts, LoadPreferences, UpdatePreferences, OpenAccessibilitySettings, GetAccessibilityPermissionState, RequestAccessibilityPermission, SubmitFeedback
 - Data
   - 설정 저장 구현 (UserDefaults + JSON 인코딩)
 - Platform
-  - macOS 시스템 연동 (NSEvent, AX 권한, AX 메뉴바 추출, 전면 앱 감지, 오버레이 호스트, 시스템 설정 열기, StatusBar 아이콘/메뉴)
+  - macOS 시스템 연동 (NSEvent, AX 권한, AX 메뉴바 추출, 전면 앱 감지, 오버레이 호스트, 시스템 설정 열기, StatusBar 아이콘/메뉴, 피드백 전송/진단 정보/설치 식별자 관리)
 - UI
   - SwiftUI View + ViewModel(MVVM)
-  - ViewModel 3개 (SRP 기반 액터별 분리):
+  - ViewModel 4개 (SRP 기반 액터별 분리):
     - OverlayViewModel: 오버레이 표시/숨김, 단축키 검색/필터링
     - SettingsViewModel: 트리거/핫키/동작/테마 설정 변경 및 저장
     - OnboardingViewModel: 권한 상태 관리, 온보딩 완료 흐름
+    - FeedbackViewModel: 피드백 폼 입력/검증/제출 상태
 
 ## 정적 의존성(컴파일 타임)
 
@@ -268,6 +278,39 @@ sequenceDiagram
   SB-->>User: Settings / Quit 메뉴 표시
 ```
 
+## 런타임 제어 흐름(Feedback)
+
+```mermaid
+sequenceDiagram
+  participant UI as UI.HelpSettingsTab
+  participant FVM as UI.FeedbackViewModel
+  participant SF as UseCase.SubmitFeedback
+  participant FDP as Port.FeedbackDiagnosticsProvider
+  participant IDP as Port.InstallationIDProvider
+  participant FS as Port.FeedbackSubmissionService
+  participant API as Supabase Edge Function(/functions/v1/feedback)
+
+  UI->>FVM: 제목/메시지/이메일 입력
+  UI->>FVM: Submit 탭
+  FVM->>SF: execute(draft)
+  SF->>SF: 제목/메시지/이메일 검증
+  SF->>FDP: currentDiagnostics()
+  SF->>IDP: currentInstallationID()
+  SF->>FS: submit(submission)
+  FS->>API: POST /feedback (installationId 포함)
+
+  alt 200/207
+    API-->>FVM: submissionId
+    FVM-->>UI: successMessage 표시
+  else 429
+    API-->>FVM: retryAfterSeconds
+    FVM-->>UI: 12시간 제한 안내 메시지
+  else 4xx/5xx
+    API-->>FVM: error
+    FVM-->>UI: 인라인 에러 표시
+  end
+```
+
 ## 현재 MVP 범위
 
 - 접근성 권한 상태 확인 및 설정 창/온보딩에서 실시간 자동 갱신(didBecomeActiveNotification)
@@ -294,9 +337,18 @@ sequenceDiagram
 - **설정 창: 탭 기반 레이아웃 (General / Theme / Help)**
   - General: Activation(기본 트리거 선택·홀드 시간), Behavior(자동숨김), Permissions(상태 뱃지·리프레시·설정 열기)
   - Theme: 통합 Theme 드롭다운(기본/커스텀 그룹), 중앙 Preview, 우측 하단 Save로 반영(비즉시 적용)
-  - Help: placeholder (미구현)
+  - Help: 피드백 제출 폼
+    - Email(선택), Title(최대 50자), Message(최대 500자)
+    - 제목/메시지 글자수 카운터 및 입력 단계 제한
+    - 테마 토큰 기반 커스텀 입력 필드 + 메시지 placeholder
+    - 제출 성공/실패 인라인 메시지
+    - 429 응답 시 12시간 제한 안내 메시지
   - 하단: Quit / Cancel / OK 버튼 바
   - 설정 저장 실패 시 인라인 에러 배너 표시
+- **피드백 서버 연동**:
+  - Supabase Edge Function `POST /feedback` 호출
+  - 서버에서 DB 저장 + GitHub issue + Discord webhook fan-out
+  - 설치 단위(`installationId`) 12시간 rate limiting
 - **에러 핸들링**: os.Logger 진단 로그 + 인라인 UI 피드백 + graceful degradation
 - **비활성 버튼 가시성**: 공통 모디파이어(`applyDisabledButtonAppearance`)로 disabled 상태 명도/채도 하향
 - **ViewModel SRP**: OverlayViewModel / SettingsViewModel / OnboardingViewModel 분리
@@ -304,7 +356,7 @@ sequenceDiagram
 ## 확장 포인트
 
 - Theme 탭 확장 (커스텀 팔레트/타이포/레이아웃 프리셋)
-- Help 탭 구현 (사용 가이드, FAQ, 버전 정보)
+- Help 탭 확장 (피드백 카테고리/첨부파일/FAQ)
 - Overlay를 실제 NSWindow 레벨/포지션 제어로 확장
 - BillingService 구현(StoreKit 결제/구독)
 - Cache 계층 도입 (AX 추출 결과 캐싱)

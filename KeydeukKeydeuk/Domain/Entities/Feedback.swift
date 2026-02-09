@@ -24,9 +24,9 @@ struct FeedbackDiagnostics: Equatable {
 struct FeedbackSubmission: Equatable {
     let draft: FeedbackDraft
     let diagnostics: FeedbackDiagnostics
+    let installationID: String
 }
 
 struct FeedbackSubmissionResult: Equatable {
     let submissionID: String?
-    let githubIssueURL: URL?
 }

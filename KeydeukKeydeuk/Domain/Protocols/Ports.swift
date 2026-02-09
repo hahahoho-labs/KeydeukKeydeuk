@@ -45,3 +45,7 @@ protocol FeedbackSubmissionService {
 protocol FeedbackDiagnosticsProvider {
     func currentDiagnostics() -> FeedbackDiagnostics
 }
+
+protocol InstallationIDProvider {
+    func currentInstallationID() -> String
+}

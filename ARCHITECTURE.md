@@ -3,6 +3,7 @@
 ## 1) 프로젝트 목적과 아키텍처 방향
 
 KeydeukKeydeuk는 macOS에서 현재 활성 앱의 메뉴 바 단축키를 Accessibility(AX) API로 추출해 오버레이로 보여주는 MVP입니다.
+또한 Settings > Help 탭에서 사용자 피드백을 수집해 Supabase 기반 파이프라인(DB/GitHub/Discord)으로 전달합니다.
 
 핵심 설계 원칙:
 
@@ -153,6 +154,7 @@ KeydeukKeydeuk/
     Entities/
       Activation.swift
       AppContext.swift
+      Feedback.swift
       Permission.swift
       Preferences.swift
       Shortcut.swift
@@ -172,6 +174,7 @@ KeydeukKeydeuk/
       OpenAccessibilitySettingsUseCase.swift
       RequestAccessibilityPermissionUseCase.swift
       ShowOverlayForCurrentAppUseCase.swift
+      SubmitFeedbackUseCase.swift
       UpdatePreferencesUseCase.swift
 
   Data/
@@ -181,6 +184,10 @@ KeydeukKeydeuk/
   Platform/
     AppContext/
       NSWorkspaceAppContextProvider.swift
+    Feedback/
+      AppFeedbackDiagnosticsProvider.swift
+      SupabaseFeedbackService.swift
+      UserDefaultsInstallationIDProvider.swift
     Input/
       NSEventGlobalHotkeySource.swift
     MenuBar/
@@ -205,6 +212,7 @@ KeydeukKeydeuk/
       OverlayViewModel.swift
       RootView.swift
     Settings/
+      FeedbackViewModel.swift
       SettingsView.swift
       SettingsViewModel.swift
       SettingsWindowView.swift
@@ -283,6 +291,12 @@ KeydeukKeydeuk/
 
 - 단축키 단위 모델 / 앱 단위 카탈로그 모델
 
+### `Domain/Entities/Feedback.swift`
+
+- 피드백 폼 도메인 타입(`FeedbackDraft`, `FeedbackSubmission`, `FeedbackSubmissionResult`)
+- 입력 제약 상수(`maxTitleLength=50`, `maxMessageLength=500`, `maxEmailLength=120`)
+- 채널 구현 디테일(GitHub URL 등)은 도메인에서 노출하지 않음
+
 ### Policies
 
 ### `Domain/Policies/ActivationPolicy.swift`
@@ -298,6 +312,10 @@ KeydeukKeydeuk/
 ### `Domain/Protocols/Ports.swift`
 
 - 입력, 권한, 저장소, 단축키 조회, 현재 앱 조회, 오버레이 표시 등 외부 경계 인터페이스 정의
+- 피드백 경계 Port 정의:
+  - `FeedbackSubmissionService`
+  - `FeedbackDiagnosticsProvider`
+  - `InstallationIDProvider`
 - 구현체는 Data/Platform에서 제공
 
 ---
@@ -342,6 +360,12 @@ KeydeukKeydeuk/
 ### `HideOverlayUseCase`
 
 - presenter.hide 호출
+
+### `SubmitFeedbackUseCase`
+
+- 피드백 제출 시나리오
+- 흐름: draft 정규화/검증 -> diagnostics 조회 -> installation ID 조회 -> submission service 호출
+- 429(rate limit) 등 전송 오류는 상위(UI)로 전달해 인라인 메시지 처리
 
 ---
 
@@ -409,6 +433,26 @@ KeydeukKeydeuk/
 - 좌클릭: primary action callback
 - 우클릭: Settings/Quit 메뉴
 
+### Feedback
+
+### `Platform/Feedback/AppFeedbackDiagnosticsProvider.swift`
+
+- 앱 버전/빌드/OS/Locale/BundleID 진단 정보 수집
+
+### `Platform/Feedback/UserDefaultsInstallationIDProvider.swift`
+
+- 설치 단위 식별자(`installation_id`) 생성/보관(UserDefaults)
+- 재설치/데이터 초기화 전까지 동일 키 유지
+
+### `Platform/Feedback/SupabaseFeedbackService.swift`
+
+- Supabase Edge Function `/functions/v1/feedback` 호출
+- 요청 바디 직렬화(email/title/message/diagnostics/installationId)
+- 응답 처리:
+  - 200/207 성공 처리
+  - 429 `retryAfterSeconds` 파싱 후 rate-limit 에러로 매핑
+  - 기타 4xx/5xx 에러 메시지 추출
+
 ---
 
 ## UI (View + ViewModel)
@@ -467,7 +511,15 @@ KeydeukKeydeuk/
 ### `UI/Settings/SettingsView.swift`
 
 - General 탭(Activation/Behavior/Permissions)
-- Theme 탭(통합 Theme 드롭다운 + Preview + Save) + Help placeholder
+- Theme 탭(통합 Theme 드롭다운 + Preview + Save)
+- Help 탭(피드백 제출 폼):
+  - Email(선택), Title(최대 50), Message(최대 500)
+  - 메시지 placeholder, 입력 길이 제한, 제출 상태/에러 메시지 표시
+
+### `UI/Settings/FeedbackViewModel.swift`
+
+- 피드백 폼 상태(email/title/message), 카운터, submit 가능 여부 관리
+- `SubmitFeedbackUseCase` 호출과 성공/실패 메시지 노출
 
 ### `UI/Theme/AppTheme.swift`
 
@@ -639,6 +691,38 @@ sequenceDiagram
   AC-->>AC: Settings 창 표시
 ```
 
+## 6.5 Feedback 제출/레이트리밋
+
+```mermaid
+sequenceDiagram
+  participant UI as HelpSettingsTab
+  participant FVM as FeedbackViewModel
+  participant SF as SubmitFeedbackUseCase
+  participant FDP as FeedbackDiagnosticsProvider
+  participant IDP as InstallationIDProvider
+  participant FS as FeedbackSubmissionService
+  participant API as Supabase Edge Function
+
+  UI->>FVM: Submit
+  FVM->>SF: execute(draft)
+  SF->>SF: 길이/형식 검증
+  SF->>FDP: currentDiagnostics()
+  SF->>IDP: currentInstallationID()
+  SF->>FS: submit(submission)
+  FS->>API: POST /feedback
+
+  alt success (200/207)
+    API-->>FVM: submissionId
+    FVM-->>UI: successMessage
+  else 429
+    API-->>FVM: retryAfterSeconds
+    FVM-->>UI: 12시간 제한 안내
+  else error
+    API-->>FVM: error
+    FVM-->>UI: errorMessage
+  end
+```
+
 ---
 
 ## 7) 상태/데이터 경계
@@ -648,11 +732,13 @@ sequenceDiagram
 - `Preferences`: 영속 설정 데이터
 - `OverlaySceneState`: 오버레이 화면 상태(UI 표시용)
 - `OnboardingViewModel.permissionState`: 권한 상태
+- `FeedbackViewModel` 상태(email/title/message, isSubmitting, success/errorMessage)
 - `EnvironmentValues.appEffectiveColorScheme`: 테마 해석 결과(UI 렌더링용)
 
 경계:
 
 - Persistent state: `UserDefaultsPreferencesStore`
+- Persistent state (feedback): `UserDefaultsInstallationIDProvider`의 `installation_id`
 - Runtime UI state: `OverlaySceneState` + 각 ViewModel `@Published`
 - OS integration state: `NSWorkspace`, `NSEvent`, `AX` API 결과
 

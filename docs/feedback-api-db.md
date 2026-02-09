@@ -21,7 +21,8 @@
   "osVersion": "14.6.1",
   "osName": "macOS",
   "localeIdentifier": "ko_KR",
-  "bundleID": "com.example.KeydeukKeydeuk"
+  "bundleID": "com.example.KeydeukKeydeuk",
+  "installationId": "b4fc58f0-2a57-43f2-8888-cf92b90f2d26"
 }
 ```
 
@@ -30,6 +31,7 @@
 - `title`: 필수, `1...50`자
 - `message`: 필수, `1...500`자
 - `email`: 선택, 최대 `120`자, 형식 검증
+- `installationId`: 필수, 최대 `80`자 (앱 설치 단위 식별자)
 
 ### Response
 
@@ -37,6 +39,7 @@
 - `207`: DB 저장은 성공, 외부 채널(GitHub/Discord) 일부 실패
 - `400`: 요청 body 검증 실패
 - `401`: 인증 헤더 누락/유효하지 않음 (JWT 검증 켠 경우)
+- `429`: 12시간 rate limit 초과 (`retryAfterSeconds` 반환)
 - `500`: 서버 내부 오류
 
 예시:
@@ -123,4 +126,3 @@ WHERE n.nspname='public' AND t.relname='feedback_submissions' AND c.contype='c';
 
 - `KEYDEUK_FEEDBACK_ENDPOINT`
 - `KEYDEUK_FEEDBACK_AUTH_TOKEN` (JWT 검증 켠 경우만 필요)
-

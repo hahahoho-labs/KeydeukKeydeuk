@@ -52,10 +52,12 @@ final class AppContainer {
         let updatePreferences = UpdatePreferencesUseCase(preferencesStore: preferencesStore)
         let openAccessibilitySettings = OpenAccessibilitySettingsUseCase(permissionGuide: permissionGuide)
         let feedbackDiagnosticsProvider = AppFeedbackDiagnosticsProvider()
+        let installationIDProvider = UserDefaultsInstallationIDProvider()
         let feedbackSubmissionService = SupabaseFeedbackService()
         let submitFeedback = SubmitFeedbackUseCase(
             feedbackSubmissionService: feedbackSubmissionService,
-            diagnosticsProvider: feedbackDiagnosticsProvider
+            diagnosticsProvider: feedbackDiagnosticsProvider,
+            installationIDProvider: installationIDProvider
         )
 
         // ViewModel 조립
