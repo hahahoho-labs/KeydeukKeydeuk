@@ -75,7 +75,7 @@ SRP는 함수의 개수가 아니라 **사람과 역할**에 관한 원칙이다
 특징:
 
 - `AppContainer`에서 전 구성요소를 생성/연결
-- `AppOrchestrator`가 트리거 모드(`holdCommand`, `globalHotkey`) 분기 처리
+- `AppOrchestrator`가 트리거 모드(`holdCommand`, `commandDoubleTap`) 분기 처리
 - 온보딩 완료 시 앱을 accessory 모드로 전환하고 메인 윈도우 숨김
 
 ### Domain 레이어
@@ -201,6 +201,9 @@ KeydeukKeydeuk/
       StatusBarController.swift
 
   UI/
+    Localization/
+      AppLocaleStore.swift
+      L10n.swift
     Onboarding/
       OnboardingView.swift
       OnboardingViewModel.swift
@@ -241,7 +244,7 @@ KeydeukKeydeuk/
 - UseCase 생성(Application)
 - ViewModel 생성(UI)
 - `SettingsViewModel.$preferences`를 구독해 `AppOrchestrator.updatePreferences(...)`로 전파
-- `ThemeModeStore`를 `OverlayPanelController`에 전달해 오버레이 패널에도 동일 테마 적용
+- `ThemeModeStore`와 `AppLocaleStore`를 전달해 오버레이/설정 창의 테마·언어를 동기화
 - StatusBar 좌/우클릭 라우팅
 - 권한 허용 후 앱 복귀 시 자동 오버레이 표시 처리(`pendingOverlayAfterPermission`)
 - 온보딩 상태에 따라 activation policy(`regular`/`accessory`)와 윈도우 표시 상태 제어
@@ -252,7 +255,7 @@ KeydeukKeydeuk/
 - 현재 `Preferences`를 내부 캐시(`currentPreferences`)
 - 트리거 분기:
   - `holdCommand`: ⌘ 단독 홀드 타이머 만료 시 오버레이 표시
-  - `globalHotkey`: `EvaluateActivationUseCase` 결과에 따라 show/hide/ignore
+  - `commandDoubleTap`: `EvaluateActivationUseCase` 결과에 따라 show/hide/ignore
 - 트리거 타입 변경 시 홀드 상태 초기화
 
 ### `App/OverlayPanelController.swift`
@@ -260,7 +263,7 @@ KeydeukKeydeuk/
 - `OverlaySceneState.isVisible` 구독
 - `NSPanel` 생성/표시/숨김 담당
 - 마우스 위치 기준 대상 스크린을 찾아 풀스크린 오버레이 패널 표시
-- `OverlayPanelView`에 Theme 상태(`ThemeModeStore.selectedTheme`) 전달
+- `OverlayPanelView`에 Theme/Locale 상태(`ThemeModeStore`, `AppLocaleStore`) 전달
 
 ---
 
@@ -295,6 +298,7 @@ KeydeukKeydeuk/
 
 - 피드백 폼 도메인 타입(`FeedbackDraft`, `FeedbackSubmission`, `FeedbackSubmissionResult`)
 - 입력 제약 상수(`maxTitleLength=50`, `maxMessageLength=500`, `maxEmailLength=120`)
+- 피드백 서비스 경계 에러 타입(`FeedbackSubmissionServiceError`) 정의
 - 채널 구현 디테일(GitHub URL 등)은 도메인에서 노출하지 않음
 
 ### Policies
@@ -432,6 +436,7 @@ KeydeukKeydeuk/
 - Status item 생성(KD)
 - 좌클릭: primary action callback
 - 우클릭: Settings/Quit 메뉴
+- 메뉴 타이틀은 외부(AppContainer)에서 주입받아 렌더링만 수행
 
 ### Feedback
 
@@ -448,6 +453,7 @@ KeydeukKeydeuk/
 
 - Supabase Edge Function `/functions/v1/feedback` 호출
 - 요청 바디 직렬화(email/title/message/diagnostics/installationId)
+- 실패 응답을 `FeedbackSubmissionServiceError`로 매핑해 상위 레이어로 전달
 - 응답 처리:
   - 200/207 성공 처리
   - 429 `retryAfterSeconds` 파싱 후 rate-limit 에러로 매핑
@@ -463,7 +469,7 @@ KeydeukKeydeuk/
 
 - 권한 상태 조회/요청/리프레시
 - 온보딩 완료 저장(`hasCompletedOnboarding=true`)
-- `needsOnboarding`, `permissionHint` 상태 관리
+- `needsOnboarding`, `permissionHintKey` 상태 관리
 
 ### `UI/Onboarding/OnboardingView.swift`
 
@@ -500,8 +506,8 @@ KeydeukKeydeuk/
 ### `UI/Settings/SettingsViewModel.swift`
 
 - 설정 읽기/수정 API 제공
-- 트리거 타입, 홀드 시간, 프리셋 핫키, auto-hide 토글, 통합 테마 반영
-- 저장 실패 시 인라인 오류 메시지 관리
+- 트리거 타입, 홀드 시간, auto-hide 토글, 통합 테마, 앱 언어(`Preferences.Language`) 반영
+- 저장 실패 시 인라인 오류 키(`errorMessageKey`) 관리
 
 ### `UI/Settings/SettingsWindowView.swift`
 
@@ -519,13 +525,19 @@ KeydeukKeydeuk/
 ### `UI/Settings/FeedbackViewModel.swift`
 
 - 피드백 폼 상태(email/title/message), 카운터, submit 가능 여부 관리
-- `SubmitFeedbackUseCase` 호출과 성공/실패 메시지 노출
+- `SubmitFeedbackUseCase` 호출 결과를 로컬라이즈 키(success/error) 또는 서버 raw 메시지로 노출
 
 ### `UI/Theme/AppTheme.swift`
 
 - `ThemeMode` -> `ColorScheme`/`NSAppearance` 매핑
 - `ThemePreset`별 `ThemePalette` 레지스트리로 Settings/Overlay 컬러 토큰 중앙 관리
 - `applyTheme(mode:preset:)`로 앱 전역 테마/환경값(`appEffectiveColorScheme`, `appThemePreset`) 주입
+
+### `UI/Localization/AppLocaleStore.swift`, `UI/Localization/L10n.swift`
+
+- `Preferences.Language` 값을 앱 전역 `Locale`로 해석/보관
+- `KeydeukKeydeukApp`과 설정 창/오버레이 루트에 `.environment(\.locale, ...)` 주입
+- `L10n`은 App 레이어(예: StatusBar 메뉴 타이틀 계산)에서 문자열을 안전하게 조회하는 헬퍼
 
 ---
 
@@ -575,7 +587,7 @@ sequenceDiagram
   alt trigger == holdCommand
     AO->>AO: command-only hold timer 관리
     AO->>SO: execute() (홀드 만료 시)
-  else trigger == globalHotkey
+  else trigger == commandDoubleTap
     AO->>EA: execute(event, currentPreferences)
     EA-->>AO: activate/hide/ignore
     AO->>SO: execute() (activate)
@@ -633,6 +645,27 @@ sequenceDiagram
   APP->>TP: applyTheme(mode:preset:)
   TP-->>APP: appEffectiveColorScheme + appThemePreset 주입
   APP-->>OV: overlay/settings/onboarding 동시 리렌더
+```
+
+## 6.2-2 Language 변경 -> 전역 Locale 반영
+
+```mermaid
+sequenceDiagram
+  participant SV as SettingsView
+  participant SVM as SettingsViewModel
+  participant UP as UpdatePreferencesUseCase
+  participant PS as PreferencesStore
+  participant AC as AppContainer
+  participant LS as AppLocaleStore
+  participant APP as SwiftUI Scene/Window
+
+  SV->>SVM: Language 선택
+  SVM->>UP: execute(updatedPreferences)
+  UP->>PS: save(...)
+  SVM-->>AC: @Published preferences.language
+  AC->>LS: update(language)
+  LS-->>APP: locale 변경 알림
+  APP-->>APP: onboarding/settings/overlay 재렌더
 ```
 
 ## 6.3 온보딩/권한 획득 흐름
@@ -713,13 +746,13 @@ sequenceDiagram
 
   alt success (200/207)
     API-->>FVM: submissionId
-    FVM-->>UI: successMessage
+    FVM-->>UI: successMessageKey
   else 429
     API-->>FVM: retryAfterSeconds
-    FVM-->>UI: 12시간 제한 안내
+    FVM-->>UI: errorMessageKey(rate_limited)
   else error
     API-->>FVM: error
-    FVM-->>UI: errorMessage
+    FVM-->>UI: errorMessageKey 또는 errorMessageRaw
   end
 ```
 
@@ -732,7 +765,8 @@ sequenceDiagram
 - `Preferences`: 영속 설정 데이터
 - `OverlaySceneState`: 오버레이 화면 상태(UI 표시용)
 - `OnboardingViewModel.permissionState`: 권한 상태
-- `FeedbackViewModel` 상태(email/title/message, isSubmitting, success/errorMessage)
+- `FeedbackViewModel` 상태(email/title/message, isSubmitting, successMessageKey/errorMessageKey/errorMessageRaw)
+- `AppLocaleStore.locale`: 앱 전역 Locale 상태
 - `EnvironmentValues.appEffectiveColorScheme`: 테마 해석 결과(UI 렌더링용)
 
 경계:
@@ -751,7 +785,7 @@ sequenceDiagram
 - 설정 디코딩 실패 -> 기본값으로 복구
 - AX 추출 실패/미지원 -> 빈 카탈로그로 오버레이 표시 유지
 - 권한 미획득 -> 온보딩/권한 유도 메시지로 분기
-- 설정 저장 실패 -> `SettingsViewModel.errorMessage`로 인라인 표시
+- 설정 저장 실패 -> `SettingsViewModel.errorMessageKey`로 인라인 표시
 - 진단 로그: `os.Logger` 카테고리별 기록
 
 ---
@@ -771,7 +805,7 @@ sequenceDiagram
 - `PermissionState.denied`는 현재 체커에서 직접 반환되지 않아(대부분 `notDetermined`) 상태 세분화 여지 존재
 - `ShowOverlayForCurrentAppUseCase.Result.noCatalog` 케이스는 enum에 있으나 현재 반환 경로는 실질적으로 `shown` 중심
 - Domain Port 파일(`Ports.swift`)은 기능별 파일 분리 시 탐색성 향상 가능
-- `OverlayPanelController`가 `SettingsViewModel`을 직접 참조(테마 적용 목적)하므로, 향후 `ThemeState` 읽기 모델로 분리하면 액터 경계가 더 명확해짐
+- 피드백 서비스 에러(`FeedbackSubmissionServiceError`)를 도메인 친화적 코드(예: 네트워크/서버 범주)로 더 추상화하면 HTTP 세부 의존을 더 줄일 수 있음
 
 ---
 
