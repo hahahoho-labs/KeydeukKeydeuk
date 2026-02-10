@@ -1,0 +1,129 @@
+"statusbar.menu.settings" = "Settings";
+"statusbar.menu.quit" = "Quit";
+
+"settings.window.title" = "Settings";
+"settings.window.quit" = "Quit";
+"settings.window.cancel" = "Cancel";
+"settings.window.ok" = "OK";
+
+"settings.tab.general" = "General";
+"settings.tab.theme" = "Theme";
+"settings.tab.help" = "Help";
+
+"settings.error.shortcut_modifier_required" = "Shortcut needs at least one modifier key.";
+"settings.error.shortcut_duplicate" = "Shortcut is already registered.";
+"settings.error.save_failed" = "Failed to save settings. Please try again.";
+
+"settings.general.language.section" = "Language";
+"settings.general.language.picker" = "App Language";
+"settings.general.language.option.system" = "🌐 System";
+"settings.general.language.option.korean" = "🇰🇷 Korean";
+"settings.general.language.option.english" = "🇺🇸 English";
+
+"settings.general.activation.section" = "Activation";
+"settings.general.activation.default_trigger" = "Default Trigger";
+"settings.general.activation.trigger.hold_command" = "Hold ⌘ Command";
+"settings.general.activation.trigger.command_double_tap" = "Double-tap ⌘ Command";
+"settings.general.activation.hold_duration" = "Hold Duration";
+
+"settings.general.behavior.section" = "Behavior";
+"settings.general.behavior.hide_on_esc" = "Hide on ESC";
+"settings.general.behavior.hide_on_app_switch" = "Hide on App Switch";
+
+"settings.general.permissions.section" = "Permissions";
+"settings.general.permissions.accessibility" = "Accessibility";
+"settings.general.permissions.refresh" = "Refresh permission status";
+"settings.general.permissions.description" = "Overlay requires Accessibility permission to read menu shortcuts.";
+"settings.general.permissions.open_settings" = "Open Accessibility Settings";
+"settings.general.permissions.status.granted" = "Granted";
+"settings.general.permissions.status.denied" = "Denied";
+"settings.general.permissions.status.not_determined" = "Not Determined";
+
+"settings.theme.section" = "Theme";
+"settings.theme.description" = "Choose one theme for onboarding, settings, and overlay.";
+"settings.theme.picker" = "Theme";
+"settings.theme.preview.section" = "Preview";
+"settings.theme.preview.active" = "This theme is currently active.";
+"settings.theme.preview.overlay" = "Preview Overlay";
+"settings.theme.preview.column.app" = "App";
+"settings.theme.preview.column.window" = "Window";
+"settings.theme.preview.column.help" = "Help";
+"settings.theme.preview.row.hide" = "Hide";
+"settings.theme.preview.row.preferences" = "Preferences";
+"settings.theme.preview.row.quit" = "Quit";
+"settings.theme.preview.row.minimize" = "Minimize";
+"settings.theme.preview.row.zoom" = "Zoom";
+"settings.theme.preview.row.bring_all_to_front" = "Bring All to Front";
+"settings.theme.preview.row.search" = "Search";
+"settings.theme.preview.row.support" = "Support";
+"settings.theme.preview.row.shortcuts" = "Shortcuts";
+
+"settings.help.feedback.section" = "Send Feedback";
+"settings.help.feedback.description" = "Share suggestions or report issues. Title is limited to %d characters and message to %d characters.";
+"settings.help.feedback.email.label" = "Email (optional)";
+"settings.help.feedback.email.placeholder" = "you@example.com";
+"settings.help.feedback.title.label" = "Title";
+"settings.help.feedback.title.placeholder" = "Short summary";
+"settings.help.feedback.message.label" = "Message";
+"settings.help.feedback.message.placeholder" = "Tell us what happened and what you expected.";
+"settings.help.feedback.submit.button" = "Submit Feedback";
+"settings.help.feedback.submit.submitting" = "Submitting...";
+"settings.help.feedback.success" = "Thanks for your feedback. Submitted successfully.";
+"settings.help.feedback.error.empty_title" = "Title is required.";
+"settings.help.feedback.error.title_too_long" = "Title must be at most 50 characters.";
+"settings.help.feedback.error.empty_message" = "Message is required.";
+"settings.help.feedback.error.message_too_long" = "Message must be at most 500 characters.";
+"settings.help.feedback.error.email_too_long" = "Email must be at most 120 characters.";
+"settings.help.feedback.error.invalid_email" = "Please enter a valid email format.";
+"settings.help.feedback.error.endpoint_missing" = "Feedback endpoint is not configured.";
+"settings.help.feedback.error.invalid_response" = "Feedback server returned an invalid response.";
+"settings.help.feedback.error.rate_limited" = "You can send feedback once every 12 hours.";
+"settings.help.feedback.error.network" = "Network connection failed while sending feedback.";
+"settings.help.feedback.error.submit_failed" = "Failed to submit feedback. Please try again.";
+
+"theme.title.system" = "System";
+"theme.title.light" = "Light";
+"theme.title.dark" = "Dark";
+"theme.title.graphite" = "Graphite";
+"theme.title.warm_paper" = "Warm Paper";
+"theme.title.nord_mist" = "Nord Mist";
+"theme.title.high_contrast" = "High Contrast";
+
+"theme.description.system" = "Follow macOS appearance with Frost palette";
+"theme.description.light" = "Light appearance with Frost palette";
+"theme.description.dark" = "Dark appearance with Frost palette";
+"theme.description.graphite" = "Balanced neutral dark theme";
+"theme.description.warm_paper" = "Warm low-glare paper-like theme";
+"theme.description.nord_mist" = "Cool blue-gray dark theme";
+"theme.description.high_contrast" = "Maximum readability and separation";
+
+"onboarding.welcome.title" = "Welcome to KeydeukKeydeuk";
+"onboarding.title" = "Onboarding";
+"onboarding.description" = "Grant Accessibility permission and choose a default activation trigger (hold ⌘ or double-tap ⌘).";
+"onboarding.permission.status.granted" = "Accessibility: Granted";
+"onboarding.permission.status.denied" = "Accessibility: Denied";
+"onboarding.permission.status.not_determined" = "Accessibility: Not Determined";
+"onboarding.request_permission" = "Request Permission";
+"onboarding.finish_setup" = "Finish Setup";
+"onboarding.trigger.section" = "Trigger Settings";
+"onboarding.hint.permission_requested" = "Permission request sent. If no prompt appears, allow KeydeukKeydeuk in System Settings > Privacy & Security > Accessibility.";
+"onboarding.hint.permission_required" = "Please grant Accessibility permission to finish onboarding.";
+"onboarding.hint.save_failed" = "Failed to save onboarding state.";
+
+"app.window.running.title" = "KeydeukKeydeuk is running";
+"app.window.running.description" = "Use the status bar icon or hotkey to open overlay.";
+
+"overlay.section.general" = "General";
+"overlay.search.placeholder" = "Search shortcuts…";
+"overlay.empty.title" = "No shortcuts yet";
+"overlay.empty.description" = "Catalog data for this app is not added yet.";
+"overlay.legend.command" = "command";
+"overlay.legend.control" = "control";
+"overlay.legend.shift" = "shift";
+"overlay.legend.option" = "option";
+"overlay.legend.tab" = "tab";
+"overlay.legend.esc" = "esc";
+"overlay.legend.return" = "return";
+"overlay.legend.delete" = "delete";
+"overlay.error.permission_required" = "Accessibility permission is required to show shortcuts.";
+"overlay.error.focused_app_unavailable" = "Could not detect the focused application.";

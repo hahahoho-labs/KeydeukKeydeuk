@@ -1,0 +1,129 @@
+"statusbar.menu.settings" = "설정";
+"statusbar.menu.quit" = "종료";
+
+"settings.window.title" = "설정";
+"settings.window.quit" = "종료";
+"settings.window.cancel" = "취소";
+"settings.window.ok" = "확인";
+
+"settings.tab.general" = "일반";
+"settings.tab.theme" = "테마";
+"settings.tab.help" = "도움말";
+
+"settings.error.shortcut_modifier_required" = "단축키에는 최소 한 개의 보조 키가 필요합니다.";
+"settings.error.shortcut_duplicate" = "이미 등록된 단축키입니다.";
+"settings.error.save_failed" = "설정을 저장하지 못했습니다. 다시 시도해 주세요.";
+
+"settings.general.language.section" = "언어";
+"settings.general.language.picker" = "앱 언어";
+"settings.general.language.option.system" = "🌐 시스템";
+"settings.general.language.option.korean" = "🇰🇷 한국어";
+"settings.general.language.option.english" = "🇺🇸 영어";
+
+"settings.general.activation.section" = "활성화";
+"settings.general.activation.default_trigger" = "기본 트리거";
+"settings.general.activation.trigger.hold_command" = "⌘ Command 길게 누르기";
+"settings.general.activation.trigger.command_double_tap" = "⌘ Command 두 번 누르기";
+"settings.general.activation.hold_duration" = "홀드 시간";
+
+"settings.general.behavior.section" = "동작";
+"settings.general.behavior.hide_on_esc" = "ESC로 숨기기";
+"settings.general.behavior.hide_on_app_switch" = "앱 전환 시 숨기기";
+
+"settings.general.permissions.section" = "권한";
+"settings.general.permissions.accessibility" = "손쉬운 사용";
+"settings.general.permissions.refresh" = "권한 상태 새로고침";
+"settings.general.permissions.description" = "메뉴 단축키를 읽기 위해 오버레이에는 손쉬운 사용 권한이 필요합니다.";
+"settings.general.permissions.open_settings" = "손쉬운 사용 설정 열기";
+"settings.general.permissions.status.granted" = "허용됨";
+"settings.general.permissions.status.denied" = "거부됨";
+"settings.general.permissions.status.not_determined" = "미결정";
+
+"settings.theme.section" = "테마";
+"settings.theme.description" = "온보딩, 설정, 오버레이에 적용할 테마를 선택하세요.";
+"settings.theme.picker" = "테마";
+"settings.theme.preview.section" = "미리보기";
+"settings.theme.preview.active" = "현재 이 테마가 적용되어 있습니다.";
+"settings.theme.preview.overlay" = "오버레이 미리보기";
+"settings.theme.preview.column.app" = "앱";
+"settings.theme.preview.column.window" = "윈도우";
+"settings.theme.preview.column.help" = "도움말";
+"settings.theme.preview.row.hide" = "가리기";
+"settings.theme.preview.row.preferences" = "환경설정";
+"settings.theme.preview.row.quit" = "종료";
+"settings.theme.preview.row.minimize" = "최소화";
+"settings.theme.preview.row.zoom" = "확대/축소";
+"settings.theme.preview.row.bring_all_to_front" = "모든 윈도우 앞으로";
+"settings.theme.preview.row.search" = "검색";
+"settings.theme.preview.row.support" = "지원";
+"settings.theme.preview.row.shortcuts" = "단축키";
+
+"settings.help.feedback.section" = "피드백 보내기";
+"settings.help.feedback.description" = "제안이나 문제를 알려주세요. 제목은 최대 %d자, 메시지는 최대 %d자까지 입력할 수 있습니다.";
+"settings.help.feedback.email.label" = "이메일 (선택)";
+"settings.help.feedback.email.placeholder" = "you@example.com";
+"settings.help.feedback.title.label" = "제목";
+"settings.help.feedback.title.placeholder" = "짧은 요약";
+"settings.help.feedback.message.label" = "메시지";
+"settings.help.feedback.message.placeholder" = "어떤 문제가 있었고 무엇을 기대했는지 알려주세요.";
+"settings.help.feedback.submit.button" = "피드백 제출";
+"settings.help.feedback.submit.submitting" = "제출 중...";
+"settings.help.feedback.success" = "피드백 감사합니다. 제출이 완료되었습니다.";
+"settings.help.feedback.error.empty_title" = "제목을 입력해 주세요.";
+"settings.help.feedback.error.title_too_long" = "제목은 최대 50자까지 입력할 수 있습니다.";
+"settings.help.feedback.error.empty_message" = "메시지를 입력해 주세요.";
+"settings.help.feedback.error.message_too_long" = "메시지는 최대 500자까지 입력할 수 있습니다.";
+"settings.help.feedback.error.email_too_long" = "이메일은 최대 120자까지 입력할 수 있습니다.";
+"settings.help.feedback.error.invalid_email" = "올바른 이메일 형식을 입력해 주세요.";
+"settings.help.feedback.error.endpoint_missing" = "피드백 전송 엔드포인트가 설정되지 않았습니다.";
+"settings.help.feedback.error.invalid_response" = "피드백 서버 응답이 올바르지 않습니다.";
+"settings.help.feedback.error.rate_limited" = "피드백은 12시간에 한 번만 보낼 수 있습니다.";
+"settings.help.feedback.error.network" = "피드백 전송 중 네트워크 연결에 실패했습니다.";
+"settings.help.feedback.error.submit_failed" = "피드백 제출에 실패했습니다. 다시 시도해 주세요.";
+
+"theme.title.system" = "시스템";
+"theme.title.light" = "라이트";
+"theme.title.dark" = "다크";
+"theme.title.graphite" = "그래파이트";
+"theme.title.warm_paper" = "웜 페이퍼";
+"theme.title.nord_mist" = "노드 미스트";
+"theme.title.high_contrast" = "고대비";
+
+"theme.description.system" = "macOS 외형을 따르고 Frost 팔레트를 사용합니다";
+"theme.description.light" = "라이트 외형과 Frost 팔레트를 사용합니다";
+"theme.description.dark" = "다크 외형과 Frost 팔레트를 사용합니다";
+"theme.description.graphite" = "균형 잡힌 중성 다크 테마";
+"theme.description.warm_paper" = "눈부심이 적은 따뜻한 종이 느낌 테마";
+"theme.description.nord_mist" = "차분한 블루그레이 다크 테마";
+"theme.description.high_contrast" = "최대 가독성과 명확한 구분";
+
+"onboarding.welcome.title" = "KeydeukKeydeuk에 오신 것을 환영합니다";
+"onboarding.title" = "온보딩";
+"onboarding.description" = "손쉬운 사용 권한을 허용하고 기본 활성화 트리거(⌘ 홀드 또는 ⌘ 더블탭)를 선택하세요.";
+"onboarding.permission.status.granted" = "손쉬운 사용: 허용됨";
+"onboarding.permission.status.denied" = "손쉬운 사용: 거부됨";
+"onboarding.permission.status.not_determined" = "손쉬운 사용: 미결정";
+"onboarding.request_permission" = "권한 요청";
+"onboarding.finish_setup" = "설정 완료";
+"onboarding.trigger.section" = "트리거 설정";
+"onboarding.hint.permission_requested" = "권한 요청을 보냈습니다. 프롬프트가 보이지 않으면 시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용에서 KeydeukKeydeuk를 허용해 주세요.";
+"onboarding.hint.permission_required" = "온보딩을 완료하려면 손쉬운 사용 권한을 허용해 주세요.";
+"onboarding.hint.save_failed" = "온보딩 상태 저장에 실패했습니다.";
+
+"app.window.running.title" = "KeydeukKeydeuk가 실행 중입니다";
+"app.window.running.description" = "상태바 아이콘 또는 단축키로 오버레이를 열 수 있습니다.";
+
+"overlay.section.general" = "일반";
+"overlay.search.placeholder" = "단축키 검색…";
+"overlay.empty.title" = "아직 단축키가 없습니다";
+"overlay.empty.description" = "이 앱의 카탈로그 데이터가 아직 추가되지 않았습니다.";
+"overlay.legend.command" = "command";
+"overlay.legend.control" = "control";
+"overlay.legend.shift" = "shift";
+"overlay.legend.option" = "option";
+"overlay.legend.tab" = "tab";
+"overlay.legend.esc" = "esc";
+"overlay.legend.return" = "return";
+"overlay.legend.delete" = "delete";
+"overlay.error.permission_required" = "단축키를 표시하려면 손쉬운 사용 권한이 필요합니다.";
+"overlay.error.focused_app_unavailable" = "현재 포커스된 앱을 감지하지 못했습니다.";
