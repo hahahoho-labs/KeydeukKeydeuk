@@ -1,30 +1,14 @@
 import Foundation
 
 struct SubmitFeedbackUseCase {
-    enum Error: LocalizedError {
+    enum Error: Swift.Error, Equatable {
         case emptyTitle
         case titleTooLong
         case emptyMessage
         case messageTooLong
         case emailTooLong
         case invalidEmail
-
-        var errorDescription: String? {
-            switch self {
-            case .emptyTitle:
-                return "Title is required."
-            case .titleTooLong:
-                return "Title must be at most \(FeedbackConstraints.maxTitleLength) characters."
-            case .emptyMessage:
-                return "Message is required."
-            case .messageTooLong:
-                return "Message must be at most \(FeedbackConstraints.maxMessageLength) characters."
-            case .emailTooLong:
-                return "Email must be at most \(FeedbackConstraints.maxEmailLength) characters."
-            case .invalidEmail:
-                return "Please enter a valid email address."
-            }
-        }
+        case submissionFailed(FeedbackSubmissionServiceError)
     }
 
     private let feedbackSubmissionService: FeedbackSubmissionService
@@ -50,7 +34,11 @@ struct SubmitFeedbackUseCase {
             diagnostics: diagnosticsProvider.currentDiagnostics(),
             installationID: installationIDProvider.currentInstallationID()
         )
-        return try await feedbackSubmissionService.submit(submission)
+        do {
+            return try await feedbackSubmissionService.submit(submission)
+        } catch let serviceError as FeedbackSubmissionServiceError {
+            throw Error.submissionFailed(serviceError)
+        }
     }
 
     private func normalize(_ draft: FeedbackDraft) -> FeedbackDraft {

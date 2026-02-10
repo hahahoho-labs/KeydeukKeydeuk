@@ -7,30 +7,6 @@ private let feedbackLog = Logger(
 )
 
 struct SupabaseFeedbackService: FeedbackSubmissionService {
-    enum Error: LocalizedError {
-        case missingEndpoint
-        case invalidResponse
-        case rateLimited(retryAfterSeconds: Int)
-        case server(statusCode: Int, message: String)
-
-        var errorDescription: String? {
-            switch self {
-            case .missingEndpoint:
-                return "Feedback endpoint is not configured."
-            case .invalidResponse:
-                return "Feedback server returned an invalid response."
-            case let .rateLimited(retryAfterSeconds):
-                let minutes = max(1, Int(ceil(Double(retryAfterSeconds) / 60.0)))
-                return "You can send feedback once every 12 hours. Please try again in about \(minutes) minute(s)."
-            case let .server(statusCode, message):
-                if message.isEmpty {
-                    return "Feedback request failed (\(statusCode))."
-                }
-                return "Feedback request failed (\(statusCode)): \(message)"
-            }
-        }
-    }
-
     private let endpointProvider: () -> URL?
     private let session: URLSession
 
@@ -45,7 +21,7 @@ struct SupabaseFeedbackService: FeedbackSubmissionService {
     func submit(_ feedback: FeedbackSubmission) async throws -> FeedbackSubmissionResult {
         guard let endpoint = endpointProvider() else {
             feedbackLog.error("피드백 전송 실패: endpoint 미설정")
-            throw Error.missingEndpoint
+            throw FeedbackSubmissionServiceError.missingEndpoint
         }
 
         var request = URLRequest(url: endpoint)
@@ -64,11 +40,11 @@ struct SupabaseFeedbackService: FeedbackSubmissionService {
             (data, response) = try await session.data(for: request)
         } catch {
             feedbackLog.error("피드백 전송 네트워크 오류: \(error.localizedDescription)")
-            throw error
+            throw FeedbackSubmissionServiceError.network(description: error.localizedDescription)
         }
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw Error.invalidResponse
+            throw FeedbackSubmissionServiceError.invalidResponse
         }
 
         guard [200, 201, 202, 207].contains(httpResponse.statusCode) else {
@@ -76,18 +52,18 @@ struct SupabaseFeedbackService: FeedbackSubmissionService {
             let message = errorBody.message
 
             if httpResponse.statusCode == 429 {
-                throw Error.rateLimited(
+                throw FeedbackSubmissionServiceError.rateLimited(
                     retryAfterSeconds: errorBody.retryAfterSeconds ?? (12 * 60 * 60)
                 )
             }
 
             if httpResponse.statusCode == 401 && message.lowercased().contains("missing authorization header") {
-                throw Error.server(
+                throw FeedbackSubmissionServiceError.server(
                     statusCode: 401,
                     message: "Missing authorization header. Disable JWT verification for the feedback function or set KEYDEUK_FEEDBACK_AUTH_TOKEN."
                 )
             }
-            throw Error.server(statusCode: httpResponse.statusCode, message: message)
+            throw FeedbackSubmissionServiceError.server(statusCode: httpResponse.statusCode, message: message)
         }
 
         guard !data.isEmpty else {

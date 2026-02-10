@@ -44,7 +44,7 @@ final class SupabaseFeedbackServiceTests: XCTestCase {
         do {
             _ = try await service.submit(await makeSubmission())
             XCTFail("Expected rateLimited error")
-        } catch let error as SupabaseFeedbackService.Error {
+        } catch let error as FeedbackSubmissionServiceError {
             switch error {
             case let .rateLimited(retryAfterSeconds):
                 XCTAssertEqual(retryAfterSeconds, 3600)
@@ -73,7 +73,7 @@ final class SupabaseFeedbackServiceTests: XCTestCase {
         do {
             _ = try await service.submit(await makeSubmission())
             XCTFail("Expected server error")
-        } catch let error as SupabaseFeedbackService.Error {
+        } catch let error as FeedbackSubmissionServiceError {
             switch error {
             case let .server(statusCode, message):
                 XCTAssertEqual(statusCode, 401)

@@ -36,12 +36,14 @@ final class FeedbackViewModelTests: XCTestCase {
 
         let title = await MainActor.run { vm.title }
         let message = await MainActor.run { vm.message }
-        let successMessage = await MainActor.run { vm.successMessage }
-        let errorMessage = await MainActor.run { vm.errorMessage }
+        let successMessageKey = await MainActor.run { vm.successMessageKey }
+        let errorMessageKey = await MainActor.run { vm.errorMessageKey }
+        let errorMessageRaw = await MainActor.run { vm.errorMessageRaw }
         XCTAssertEqual(title, "")
         XCTAssertEqual(message, "")
-        XCTAssertNotNil(successMessage)
-        XCTAssertNil(errorMessage)
+        XCTAssertEqual(successMessageKey, "settings.help.feedback.success")
+        XCTAssertNil(errorMessageKey)
+        XCTAssertNil(errorMessageRaw)
     }
 
     func testSubmit_failure_setsErrorMessage() async {
@@ -56,10 +58,12 @@ final class FeedbackViewModelTests: XCTestCase {
 
         await vm.submit()
 
-        let successMessage = await MainActor.run { vm.successMessage }
-        let errorMessage = await MainActor.run { vm.errorMessage }
-        XCTAssertNil(successMessage)
-        XCTAssertEqual(errorMessage, "boom")
+        let successMessageKey = await MainActor.run { vm.successMessageKey }
+        let errorMessageKey = await MainActor.run { vm.errorMessageKey }
+        let errorMessageRaw = await MainActor.run { vm.errorMessageRaw }
+        XCTAssertNil(successMessageKey)
+        XCTAssertNil(errorMessageKey)
+        XCTAssertEqual(errorMessageRaw, "boom")
         XCTAssertEqual(spyService.receivedSubmissions.count, 1)
     }
 

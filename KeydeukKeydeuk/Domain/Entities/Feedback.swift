@@ -30,3 +30,11 @@ struct FeedbackSubmission: Equatable {
 struct FeedbackSubmissionResult: Equatable {
     let submissionID: String?
 }
+
+enum FeedbackSubmissionServiceError: Error, Equatable {
+    case missingEndpoint
+    case invalidResponse
+    case rateLimited(retryAfterSeconds: Int)
+    case server(statusCode: Int, message: String)
+    case network(description: String)
+}
