@@ -90,12 +90,60 @@ struct Preferences: Codable, Equatable {
         }
     }
 
+    struct Language: RawRepresentable, Codable, Equatable, Hashable {
+        let rawValue: String
+
+        private enum Canonical {
+            static let system = "system"
+            static let korean = "ko"
+            static let english = "en"
+        }
+
+        static let system = Language(rawValue: Canonical.system)
+        static let korean = Language(rawValue: Canonical.korean)
+        static let english = Language(rawValue: Canonical.english)
+
+        init(rawValue: String) {
+            self.rawValue = Self.normalize(rawValue)
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.singleValueContainer()
+            let raw = (try? container.decode(String.self)) ?? Self.system.rawValue
+            self.init(rawValue: raw)
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.singleValueContainer()
+            try container.encode(rawValue)
+        }
+
+        private static func normalize(_ rawValue: String) -> String {
+            let normalized = rawValue
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+                .replacingOccurrences(of: "_", with: "-")
+            switch normalized {
+            case "", "system", "auto", "default":
+                return Canonical.system
+            // Backward compatibility for legacy enum raw values.
+            case "korean":
+                return Canonical.korean
+            case "english":
+                return Canonical.english
+            default:
+                return normalized
+            }
+        }
+    }
+
     var trigger: Trigger
     var customHotkeys: [HotkeyBinding]
     var holdDurationSeconds: Double
     var autoHideOnAppSwitch: Bool
     var autoHideOnEsc: Bool
     var theme: Theme
+    var language: Language
     var hasCompletedOnboarding: Bool
 
     var themeMode: ThemeMode { theme.mode }
@@ -108,6 +156,7 @@ struct Preferences: Codable, Equatable {
         autoHideOnAppSwitch: Bool,
         autoHideOnEsc: Bool,
         theme: Theme,
+        language: Language,
         hasCompletedOnboarding: Bool
     ) {
         self.trigger = trigger
@@ -116,6 +165,7 @@ struct Preferences: Codable, Equatable {
         self.autoHideOnAppSwitch = autoHideOnAppSwitch
         self.autoHideOnEsc = autoHideOnEsc
         self.theme = theme
+        self.language = language
         self.hasCompletedOnboarding = hasCompletedOnboarding
     }
 
@@ -126,6 +176,7 @@ struct Preferences: Codable, Equatable {
         autoHideOnAppSwitch: true,
         autoHideOnEsc: true,
         theme: .system,
+        language: .system,
         hasCompletedOnboarding: false
     )
 
@@ -138,6 +189,7 @@ struct Preferences: Codable, Equatable {
         case autoHideOnAppSwitch
         case autoHideOnEsc
         case theme
+        case language
         case themeMode
         case themePreset
         case hasCompletedOnboarding
@@ -176,6 +228,7 @@ struct Preferences: Codable, Equatable {
             let legacyPreset = try container.decodeIfPresent(ThemePreset.self, forKey: .themePreset) ?? defaults.themePreset
             theme = Theme.from(mode: legacyMode, preset: legacyPreset)
         }
+        language = try container.decodeIfPresent(Language.self, forKey: .language) ?? defaults.language
         hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? defaults.hasCompletedOnboarding
     }
 
@@ -187,6 +240,7 @@ struct Preferences: Codable, Equatable {
         try container.encode(autoHideOnAppSwitch, forKey: .autoHideOnAppSwitch)
         try container.encode(autoHideOnEsc, forKey: .autoHideOnEsc)
         try container.encode(theme, forKey: .theme)
+        try container.encode(language, forKey: .language)
         try container.encode(hasCompletedOnboarding, forKey: .hasCompletedOnboarding)
     }
 }
