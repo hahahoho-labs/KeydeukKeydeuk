@@ -6,11 +6,22 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A0B1C2DA2F40000100BC8479 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A0B1C2D62F40000100BC8479 /* XCTest.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		A0B1C2D52F40000100BC8479 /* KeydeukKeydeukTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KeydeukKeydeukTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0B1C2D62F40000100BC8479 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/MacOSX.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		6E625FC32F35EDB600BC8479 /* KeydeukKeydeuk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KeydeukKeydeuk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		A0B1C2D32F40000100BC8479 /* KeydeukKeydeukTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KeydeukKeydeukTests;
+			sourceTree = "<group>";
+		};
 		6E625FC52F35EDB600BC8479 /* KeydeukKeydeuk */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = KeydeukKeydeuk;
@@ -18,7 +29,25 @@
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
+/* Begin PBXContainerItemProxy section */
+		A0B1C2DE2F40000100BC8479 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6E625FBB2F35EDB500BC8479 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6E625FC22F35EDB500BC8479;
+			remoteInfo = KeydeukKeydeuk;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		A0B1C2D72F40000100BC8479 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0B1C2DA2F40000100BC8479 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6E625FC02F35EDB500BC8479 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -33,6 +62,7 @@
 			isa = PBXGroup;
 			children = (
 				6E625FC52F35EDB600BC8479 /* KeydeukKeydeuk */,
+				A0B1C2D32F40000100BC8479 /* KeydeukKeydeukTests */,
 				6E625FC42F35EDB600BC8479 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,6 +70,7 @@
 		6E625FC42F35EDB600BC8479 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				A0B1C2D52F40000100BC8479 /* KeydeukKeydeukTests.xctest */,
 				6E625FC32F35EDB600BC8479 /* KeydeukKeydeuk.app */,
 			);
 			name = Products;
@@ -48,6 +79,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		A0B1C2D42F40000100BC8479 /* KeydeukKeydeukTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A0B1C2DB2F40000100BC8479 /* Build configuration list for PBXNativeTarget "KeydeukKeydeukTests" */;
+			buildPhases = (
+				A0B1C2D82F40000100BC8479 /* Sources */,
+				A0B1C2D72F40000100BC8479 /* Frameworks */,
+				A0B1C2D92F40000100BC8479 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A0B1C2DF2F40000100BC8479 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A0B1C2D32F40000100BC8479 /* KeydeukKeydeukTests */,
+			);
+			name = KeydeukKeydeukTests;
+			packageProductDependencies = (
+			);
+			productName = KeydeukKeydeukTests;
+			productReference = A0B1C2D52F40000100BC8479 /* KeydeukKeydeukTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		6E625FC22F35EDB500BC8479 /* KeydeukKeydeuk */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 6E625FCE2F35EDB700BC8479 /* Build configuration list for PBXNativeTarget "KeydeukKeydeuk" */;
@@ -80,6 +134,10 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					A0B1C2D42F40000100BC8479 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 6E625FC22F35EDB500BC8479;
+					};
 					6E625FC22F35EDB500BC8479 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -99,12 +157,20 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				A0B1C2D42F40000100BC8479 /* KeydeukKeydeukTests */,
 				6E625FC22F35EDB500BC8479 /* KeydeukKeydeuk */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		A0B1C2D92F40000100BC8479 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6E625FC12F35EDB500BC8479 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +181,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		A0B1C2D82F40000100BC8479 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6E625FBF2F35EDB500BC8479 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -123,6 +196,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A0B1C2DF2F40000100BC8479 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6E625FC22F35EDB500BC8479 /* KeydeukKeydeuk */;
+			targetProxy = A0B1C2DE2F40000100BC8479 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		6E625FCC2F35EDB700BC8479 /* Debug */ = {
@@ -303,6 +384,48 @@
 			};
 			name = Release;
 		};
+		A0B1C2DC2F40000100BC8479 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				PRODUCT_BUNDLE_IDENTIFIER = hexdrinker.KeydeukKeydeukTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/KeydeukKeydeuk.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/KeydeukKeydeuk";
+			};
+			name = Debug;
+		};
+		A0B1C2DD2F40000100BC8479 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				PRODUCT_BUNDLE_IDENTIFIER = hexdrinker.KeydeukKeydeukTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/KeydeukKeydeuk.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/KeydeukKeydeuk";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -320,6 +443,15 @@
 			buildConfigurations = (
 				6E625FCF2F35EDB700BC8479 /* Debug */,
 				6E625FD02F35EDB700BC8479 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A0B1C2DB2F40000100BC8479 /* Build configuration list for PBXNativeTarget "KeydeukKeydeukTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0B1C2DC2F40000100BC8479 /* Debug */,
+				A0B1C2DD2F40000100BC8479 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
