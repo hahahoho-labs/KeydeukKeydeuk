@@ -149,6 +149,7 @@ KeydeukKeydeuk/
     AppOrchestrator.swift
     KeydeukKeydeukApp.swift
     OverlayPanelController.swift
+    OverlayScenePresenter.swift
 
   Domain/
     Entities/
@@ -192,8 +193,6 @@ KeydeukKeydeuk/
       NSEventGlobalHotkeySource.swift
     MenuBar/
       AXMenuBarShortcutRepository.swift
-    Overlay/
-      OverlayWindowHost.swift
     Permissions/
       AXPermissionChecker.swift
       SystemPermissionGuide.swift
@@ -264,6 +263,12 @@ KeydeukKeydeuk/
 - `NSPanel` 생성/표시/숨김 담당
 - 마우스 위치 기준 대상 스크린을 찾아 풀스크린 오버레이 패널 표시
 - `OverlayPanelView`에 Theme/Locale 상태(`ThemeModeStore`, `AppLocaleStore`) 전달
+
+### `App/OverlayScenePresenter.swift`
+
+- `OverlayPresenter` 구현
+- 오버레이 표시 시 `OverlaySceneState` 갱신(appName, bundleID, icon, shortcuts, isVisible)
+- 앱 아이콘 로딩 담당
 
 ---
 
@@ -409,14 +414,6 @@ KeydeukKeydeuk/
 - 문자 기반/가상키 기반 단축키 추출
 - modifier 비트 조합을 Key symbol(⌘⌥⇧⌃) 문자열로 변환
 - 실패 시 빈 카탈로그 반환하여 기능 저하 허용(graceful degradation)
-
-### Overlay
-
-### `Platform/Overlay/OverlayWindowHost.swift`
-
-- `OverlayPresenter` 구현
-- 오버레이 표시 시 `OverlaySceneState` 갱신(appName, bundleID, icon, shortcuts, isVisible)
-- 앱 아이콘 로딩 담당
 
 ### Permissions
 

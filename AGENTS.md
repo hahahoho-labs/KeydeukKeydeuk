@@ -41,6 +41,7 @@ KeydeukKeydeuk/
     AppOrchestrator.swift       # 키보드 이벤트 → 오버레이 제어
     KeydeukKeydeukApp.swift     # @main 진입점, SwiftUI Scene 정의
     OverlayPanelController.swift # NSPanel 생성/표시/숨김
+    OverlayScenePresenter.swift  # OverlayPresenter 구현 (UI 상태 반영)
   Domain/
     Entities/
       Activation.swift          # KeyModifiers, KeyEvent, ActivationDecision
@@ -84,8 +85,6 @@ KeydeukKeydeuk/
       NSEventGlobalHotkeySource.swift      # 글로벌/로컬 키보드 이벤트 모니터
     MenuBar/
       AXMenuBarShortcutRepository.swift    # AX API 메뉴 바 단축키 추출
-    Overlay/
-      OverlayWindowHost.swift              # OverlayPresenter 구현
     Permissions/
       AXPermissionChecker.swift            # 접근성 권한 상태 확인
       SystemPermissionGuide.swift          # 권한 프롬프트 + 시스템 설정 열기

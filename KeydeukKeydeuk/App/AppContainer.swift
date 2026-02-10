@@ -31,7 +31,7 @@ final class AppContainer {
         let permissionChecker = AXPermissionChecker()
         let permissionGuide = SystemPermissionGuide()
         let appContextProvider = NSWorkspaceAppContextProvider()
-        let overlayPresenter = OverlayWindowHost(state: overlayState)
+        let overlayPresenter = OverlayScenePresenter(state: overlayState)
         let eventSource = NSEventGlobalHotkeySource()
 
         let activationPolicy = DefaultActivationPolicy()

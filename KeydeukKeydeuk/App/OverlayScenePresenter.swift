@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 
 @MainActor
-final class OverlayWindowHost: OverlayPresenter {
+final class OverlayScenePresenter: OverlayPresenter {
     private let state: OverlaySceneState
 
     init(state: OverlaySceneState) {
