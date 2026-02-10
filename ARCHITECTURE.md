@@ -150,6 +150,7 @@ KeydeukKeydeuk/
     KeydeukKeydeukApp.swift
     OverlayPanelController.swift
     OverlayScenePresenter.swift
+    AppWindowCoordinator.swift
 
   Domain/
     Entities/
@@ -242,11 +243,12 @@ KeydeukKeydeuk/
 - Port 구현체 생성(Data/Platform)
 - UseCase 생성(Application)
 - ViewModel 생성(UI)
+- AppWindowCoordinator/StatusBar/Orchestrator 라우팅 조합
 - `SettingsViewModel.$preferences`를 구독해 `AppOrchestrator.updatePreferences(...)`로 전파
 - `ThemeModeStore`와 `AppLocaleStore`를 전달해 오버레이/설정 창의 테마·언어를 동기화
 - StatusBar 좌/우클릭 라우팅
 - 권한 허용 후 앱 복귀 시 자동 오버레이 표시 처리(`pendingOverlayAfterPermission`)
-- 온보딩 상태에 따라 activation policy(`regular`/`accessory`)와 윈도우 표시 상태 제어
+- 온보딩 상태에 따라 AppWindowCoordinator에 프레젠테이션 적용 위임
 
 ### `App/AppOrchestrator.swift`
 
@@ -269,6 +271,12 @@ KeydeukKeydeuk/
 - `OverlayPresenter` 구현
 - 오버레이 표시 시 `OverlaySceneState` 갱신(appName, bundleID, icon, shortcuts, isVisible)
 - 앱 아이콘 로딩 담당
+
+### `App/AppWindowCoordinator.swift`
+
+- 앱 activation policy(`regular`/`accessory`) 및 윈도우 노출 정책 적용
+- 온보딩 창 전면 표시(main window 포커싱) 담당
+- 설정 창 생성/재사용/타이틀 업데이트 담당
 
 ---
 

@@ -18,9 +18,23 @@ final class AppContainer {
     private var orchestrator: AppOrchestrator?
     private let statusBarController: StatusBarController
     private let overlayPanelController: OverlayPanelController
-    private var settingsWindowController: NSWindowController?
     private var pendingOverlayAfterPermission = false
     private var cancellables: Set<AnyCancellable> = []
+    private lazy var windowCoordinator = AppWindowCoordinator(
+        overlayPanelController: overlayPanelController,
+        makeSettingsRootView: { [weak self] in
+            guard let self else { return AnyView(EmptyView()) }
+            return AnyView(
+                SettingsWindowRootView(
+                    settingsVM: self.settingsViewModel,
+                    onboardingVM: self.onboardingViewModel,
+                    feedbackVM: self.feedbackViewModel,
+                    themeModeStore: self.themeModeStore,
+                    localeStore: self.appLocaleStore
+                )
+            )
+        }
+    )
 
     init() {
         let preferencesStore = UserDefaultsPreferencesStore()
@@ -118,11 +132,7 @@ final class AppContainer {
                 self?.appLocaleStore.update(language: prefs.language)
                 if let self {
                     self.updateStatusBarTexts()
-                    self.settingsWindowController?.window?.title = L10n.text(
-                        "settings.window.title",
-                        locale: self.appLocaleStore.locale,
-                        fallback: "Settings"
-                    )
+                    self.windowCoordinator.updateSettingsWindowTitle(self.settingsWindowTitle())
                 }
             }
             .store(in: &cancellables)
@@ -138,8 +148,7 @@ final class AppContainer {
 
                 if self.onboardingViewModel.needsOnboarding {
                     log.warning("⚠️ 온보딩 미완료 — 온보딩 창 표시")
-                    NSApp.activate(ignoringOtherApps: true)
-                    self.bringMainWindowToFront()
+                    self.windowCoordinator.showOnboardingWindow()
                 } else if self.onboardingViewModel.permissionState != .granted {
                     // 권한 미허용 → 프롬프트만 띄우고, 허용 후 복귀 시 자동 오버레이
                     log.info("🔒 접근성 권한 미허용 — 권한 프롬프트 표시, 허용 대기")
@@ -147,22 +156,20 @@ final class AppContainer {
                     self.onboardingViewModel.requestAccessibilityPermissionPrompt()
                 } else {
                     log.warning("⚠️ 오버레이 표시 실패 — fallback: 설정 창 표시")
-                    NSApp.activate(ignoringOtherApps: true)
-                    self.presentSettingsWindow()
+                    self.windowCoordinator.presentSettingsWindow(title: self.settingsWindowTitle())
                 }
             }
         }
         self.statusBarController.onSettingsClick = { [weak self] in
             guard let self else { return }
-            NSApp.activate(ignoringOtherApps: true)
-            self.presentSettingsWindow()
+            self.windowCoordinator.presentSettingsWindow(title: self.settingsWindowTitle())
         }
 
         onboardingViewModel.$needsOnboarding
             .dropFirst() // init 중 즉시 방출 무시 → start()에서 수동 호출
             .removeDuplicates()
             .sink { [weak self] needsOnboarding in
-                self?.applyAppPresentation(needsOnboarding: needsOnboarding)
+                self?.windowCoordinator.applyPresentation(needsOnboarding: needsOnboarding)
             }
             .store(in: &cancellables)
 
@@ -188,12 +195,12 @@ final class AppContainer {
         statusBarController.start()
         updateStatusBarTexts()
         orchestrator?.start()
-        applyAppPresentation(needsOnboarding: onboardingViewModel.needsOnboarding)
+        windowCoordinator.applyPresentation(needsOnboarding: onboardingViewModel.needsOnboarding)
 
         // WindowGroup can be created after start(); re-apply presentation on next runloop.
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            self.applyAppPresentation(needsOnboarding: self.onboardingViewModel.needsOnboarding)
+            self.windowCoordinator.applyPresentation(needsOnboarding: self.onboardingViewModel.needsOnboarding)
         }
     }
 
@@ -210,60 +217,16 @@ final class AppContainer {
         }
     }
 
-    // MARK: - App Presentation
-
-    private func applyAppPresentation(needsOnboarding: Bool) {
-        if needsOnboarding {
-            NSApp.setActivationPolicy(.regular)
-            NSApp.activate(ignoringOtherApps: true)
-            bringMainWindowToFront()
-            return
-        }
-
-        NSApp.setActivationPolicy(.accessory)
-        overlayPanelController.hide()
-        NSApp.windows.forEach { $0.orderOut(nil) }
-    }
-
-    private func bringMainWindowToFront() {
-        if let window = NSApp.windows.first(where: { !($0 is NSPanel) }) {
-            window.makeKeyAndOrderFront(nil)
-            return
-        }
-        NSApp.windows.first?.makeKeyAndOrderFront(nil)
-    }
-
-    private func presentSettingsWindow() {
-        if let existingWindow = settingsWindowController?.window {
-            existingWindow.makeKeyAndOrderFront(nil)
-            return
-        }
-
-        let host = NSHostingController(
-            rootView: SettingsWindowRootView(
-                settingsVM: settingsViewModel,
-                onboardingVM: onboardingViewModel,
-                feedbackVM: feedbackViewModel,
-                themeModeStore: themeModeStore,
-                localeStore: appLocaleStore
-            )
-        )
-        let window = NSWindow(contentViewController: host)
-        window.title = L10n.text("settings.window.title", locale: appLocaleStore.locale, fallback: "Settings")
-        window.styleMask = NSWindow.StyleMask([.titled, .closable, .miniaturizable])
-        window.setContentSize(NSSize(width: 760, height: 560))
-        window.center()
-        let controller = NSWindowController(window: window)
-        controller.showWindow(nil)
-        settingsWindowController = controller
-    }
-
     private func updateStatusBarTexts() {
         let locale = appLocaleStore.locale
         statusBarController.updateMenuTitles(
             settings: L10n.text("statusbar.menu.settings", locale: locale, fallback: "Settings"),
             quit: L10n.text("statusbar.menu.quit", locale: locale, fallback: "Quit")
         )
+    }
+
+    private func settingsWindowTitle() -> String {
+        L10n.text("settings.window.title", locale: appLocaleStore.locale, fallback: "Settings")
     }
 }
 

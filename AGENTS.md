@@ -42,6 +42,7 @@ KeydeukKeydeuk/
     KeydeukKeydeukApp.swift     # @main 진입점, SwiftUI Scene 정의
     OverlayPanelController.swift # NSPanel 생성/표시/숨김
     OverlayScenePresenter.swift  # OverlayPresenter 구현 (UI 상태 반영)
+    AppWindowCoordinator.swift   # 앱 윈도우/프레젠테이션(온보딩·설정창) 제어
   Domain/
     Entities/
       Activation.swift          # KeyModifiers, KeyEvent, ActivationDecision
