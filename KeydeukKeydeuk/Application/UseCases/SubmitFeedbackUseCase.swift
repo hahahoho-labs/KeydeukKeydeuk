@@ -59,12 +59,7 @@ struct SubmitFeedbackUseCase {
 
         if let email = draft.email {
             guard email.count <= FeedbackConstraints.maxEmailLength else { throw Error.emailTooLong }
-            guard Self.isValidEmail(email) else { throw Error.invalidEmail }
+            guard FeedbackEmailValidator.isValid(email) else { throw Error.invalidEmail }
         }
-    }
-
-    private static func isValidEmail(_ value: String) -> Bool {
-        let pattern = #"^[A-Z0-9a-z._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$"#
-        return value.range(of: pattern, options: .regularExpression) != nil
     }
 }

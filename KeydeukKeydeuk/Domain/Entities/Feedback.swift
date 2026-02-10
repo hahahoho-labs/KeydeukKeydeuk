@@ -6,6 +6,13 @@ enum FeedbackConstraints {
     static let maxEmailLength = 120
 }
 
+enum FeedbackEmailValidator {
+    static func isValid(_ value: String) -> Bool {
+        let pattern = #"^[A-Z0-9a-z._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$"#
+        return value.range(of: pattern, options: .regularExpression) != nil
+    }
+}
+
 struct FeedbackDraft: Equatable {
     let email: String?
     let title: String

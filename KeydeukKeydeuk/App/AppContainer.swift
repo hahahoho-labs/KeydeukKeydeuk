@@ -141,7 +141,7 @@ final class AppContainer {
             log.info("🖱️ StatusBar 좌클릭 — 오버레이 표시 시도")
             Task { @MainActor in
                 let result = await self.overlayViewModel.requestShow()
-                if result == .shown {
+                if result == .shown || result == .noCatalog {
                     log.info("✅ 오버레이 표시 성공")
                     return
                 }

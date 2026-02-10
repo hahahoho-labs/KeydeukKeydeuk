@@ -22,9 +22,6 @@ struct GeneralSettingsTab: View {
             }
             .padding(20)
         }
-        .onDisappear {
-            settingsVM.cancelCustomHotkeyCapture()
-        }
     }
 
     // MARK: - Error Banner

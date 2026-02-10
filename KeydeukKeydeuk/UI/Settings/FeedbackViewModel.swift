@@ -32,7 +32,7 @@ final class FeedbackViewModel: ObservableObject {
     var messageCountText: String { "\(message.count)/\(maxMessageLength)" }
 
     var hasInvalidEmail: Bool {
-        !trimmedEmail.isEmpty && !Self.validateEmail(trimmedEmail)
+        !trimmedEmail.isEmpty && !FeedbackEmailValidator.isValid(trimmedEmail)
     }
 
     var canSubmit: Bool {
@@ -157,8 +157,4 @@ final class FeedbackViewModel: ObservableObject {
         return nil
     }
 
-    private static func validateEmail(_ value: String) -> Bool {
-        let pattern = #"^[A-Z0-9a-z._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$"#
-        return value.range(of: pattern, options: .regularExpression) != nil
-    }
 }
