@@ -13,12 +13,12 @@ struct AppWindowView: View {
                 RootView(onboardingVM: onboardingVM, settingsVM: settingsVM)
             } else {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("KeydeukKeydeuk is running")
+                    Text("app.window.running.title")
                         .font(.headline)
-                    Text("Use the status bar icon or hotkey to open overlay.")
+                    Text("app.window.running.description")
                         .foregroundStyle(.secondary)
-                    if let message = onboardingVM.permissionHint {
-                        Text(message)
+                    if let messageKey = onboardingVM.permissionHintKey {
+                        Text(LocalizedStringKey(messageKey))
                             .font(.callout)
                             .foregroundStyle(.orange)
                     }

@@ -12,9 +12,10 @@ struct GeneralSettingsTab: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if let error = settingsVM.errorMessage {
-                    errorBanner(error)
+                if let errorMessageKey = settingsVM.errorMessageKey {
+                    errorBanner(errorMessageKey)
                 }
+                languageSection
                 activationSection
                 behaviorSection
                 permissionSection
@@ -28,12 +29,12 @@ struct GeneralSettingsTab: View {
 
     // MARK: - Error Banner
 
-    private func errorBanner(_ message: String) -> some View {
+    private func errorBanner(_ messageKey: String) -> some View {
         let palette = ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
         return HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.yellow)
-            Text(message)
+            Text(LocalizedStringKey(messageKey))
                 .font(.callout)
             Spacer()
             Button {
@@ -49,12 +50,31 @@ struct GeneralSettingsTab: View {
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
+    // MARK: - Language
+
+    private var languageSection: some View {
+        SettingsSection(titleKey: "settings.general.language.section") {
+            Picker(
+                "settings.general.language.picker",
+                selection: Binding(
+                    get: { settingsVM.selectedLanguage },
+                    set: { settingsVM.setLanguage($0) }
+                )
+            ) {
+                ForEach(settingsVM.supportedLanguages) { option in
+                    Text(LocalizedStringKey(option.titleKey)).tag(option.language)
+                }
+            }
+            .pickerStyle(.menu)
+        }
+    }
+
     // MARK: - Activation
 
     private var activationSection: some View {
-        SettingsSection(title: "Activation") {
+        SettingsSection(titleKey: "settings.general.activation.section") {
             Picker(
-                "Default Trigger",
+                "settings.general.activation.default_trigger",
                 selection: Binding(
                     get: {
                         settingsVM.selectedTriggerType == .commandDoubleTap
@@ -64,15 +84,15 @@ struct GeneralSettingsTab: View {
                     set: { settingsVM.setTriggerType($0) }
                 )
             ) {
-                Text("Hold ⌘ Command").tag(Preferences.Trigger.holdCommand)
-                Text("Double-tap ⌘ Command").tag(Preferences.Trigger.commandDoubleTap)
+                Text("settings.general.activation.trigger.hold_command").tag(Preferences.Trigger.holdCommand)
+                Text("settings.general.activation.trigger.command_double_tap").tag(Preferences.Trigger.commandDoubleTap)
             }
             .pickerStyle(.menu)
 
             if settingsVM.selectedTriggerType == .holdCommand {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text("Hold Duration")
+                        Text("settings.general.activation.hold_duration")
                         Spacer()
                         Text("\(settingsVM.holdDuration, specifier: "%.1f")s")
                             .monospacedDigit()
@@ -96,9 +116,9 @@ struct GeneralSettingsTab: View {
     // MARK: - Behavior
 
     private var behaviorSection: some View {
-        SettingsSection(title: "Behavior") {
+        SettingsSection(titleKey: "settings.general.behavior.section") {
             Toggle(
-                "Hide on ESC",
+                "settings.general.behavior.hide_on_esc",
                 isOn: Binding(
                     get: { settingsVM.autoHideOnEsc },
                     set: { settingsVM.setAutoHideOnEsc($0) }
@@ -106,7 +126,7 @@ struct GeneralSettingsTab: View {
             )
 
             Toggle(
-                "Hide on App Switch",
+                "settings.general.behavior.hide_on_app_switch",
                 isOn: Binding(
                     get: { settingsVM.autoHideOnAppSwitch },
                     set: { settingsVM.setAutoHideOnAppSwitch($0) }
@@ -118,9 +138,9 @@ struct GeneralSettingsTab: View {
     // MARK: - Permission
 
     private var permissionSection: some View {
-        SettingsSection(title: "Permissions") {
+        SettingsSection(titleKey: "settings.general.permissions.section") {
             HStack {
-                Text("Accessibility")
+                Text("settings.general.permissions.accessibility")
                 Spacer()
                 permissionBadge
 
@@ -132,20 +152,20 @@ struct GeneralSettingsTab: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
-                .help("Refresh permission status")
+                .help("settings.general.permissions.refresh")
             }
 
             if onboardingVM.permissionState != .granted {
-                Text("Overlay requires Accessibility permission to read menu shortcuts.")
+                Text("settings.general.permissions.description")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                Button("Open Accessibility Settings") {
+                Button("settings.general.permissions.open_settings") {
                     onboardingVM.openAccessibilityPreferences()
                 }
 
-                if let hint = onboardingVM.permissionHint {
-                    Text(hint)
+                if let hintKey = onboardingVM.permissionHintKey {
+                    Text(LocalizedStringKey(hintKey))
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
@@ -157,15 +177,15 @@ struct GeneralSettingsTab: View {
     private var permissionBadge: some View {
         switch onboardingVM.permissionState {
         case .granted:
-            Label("Granted", systemImage: "checkmark.circle.fill")
+            Label("settings.general.permissions.status.granted", systemImage: "checkmark.circle.fill")
                 .font(.callout.weight(.medium))
                 .foregroundStyle(.green)
         case .denied:
-            Label("Denied", systemImage: "xmark.circle.fill")
+            Label("settings.general.permissions.status.denied", systemImage: "xmark.circle.fill")
                 .font(.callout.weight(.medium))
                 .foregroundStyle(.red)
         case .notDetermined:
-            Label("Not Determined", systemImage: "questionmark.circle.fill")
+            Label("settings.general.permissions.status.not_determined", systemImage: "questionmark.circle.fill")
                 .font(.callout.weight(.medium))
                 .foregroundStyle(.orange)
         }
@@ -187,42 +207,42 @@ struct ThemeSettingsTab: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                SettingsSection(title: "Theme") {
-                    Text("Choose one theme for onboarding, settings, and overlay.")
+                SettingsSection(titleKey: "settings.theme.section") {
+                    Text("settings.theme.description")
                         .font(.callout)
                         .foregroundStyle(.secondary)
 
                     Picker(
-                        "Theme",
+                        "settings.theme.picker",
                         selection: Binding(
                             get: { selectedTheme },
                             set: { settingsVM.setTheme($0) }
                         )
                     ) {
                         ForEach(defaultThemes, id: \.self) { theme in
-                            Text(ThemeText.title(for: theme)).tag(theme)
+                            Text(verbatim: ThemeText.title(for: theme)).tag(theme)
                         }
 
                         Divider()
 
                         ForEach(customThemes, id: \.self) { theme in
-                            Text(ThemeText.title(for: theme)).tag(theme)
+                            Text(verbatim: ThemeText.title(for: theme)).tag(theme)
                         }
                     }
                     .pickerStyle(.menu)
 
-                    Text(ThemeText.description(for: selectedTheme))
+                    Text(ThemeText.descriptionKey(for: selectedTheme))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                SettingsSection(title: "Preview") {
+                SettingsSection(titleKey: "settings.theme.preview.section") {
                     VStack(spacing: 10) {
                         ThemePreviewCard(theme: selectedTheme)
                             .frame(maxWidth: 640)
                             .frame(maxWidth: .infinity)
 
-                        Text("This theme is currently active.")
+                        Text("settings.theme.preview.active")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -298,7 +318,7 @@ private struct ThemePreviewCard: View {
                     Circle()
                         .fill(Color.accentColor.opacity(0.7))
                         .frame(width: 10, height: 10)
-                    Text("Preview Overlay")
+                    Text("settings.theme.preview.overlay")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(primaryText)
                     Spacer()
@@ -313,22 +333,34 @@ private struct ThemePreviewCard: View {
 
                 HStack(alignment: .top, spacing: 10) {
                     ThemePreviewColumn(
-                        title: "App",
-                        rows: ["Hide", "Preferences", "Quit"],
+                        titleKey: "settings.theme.preview.column.app",
+                        rowKeys: [
+                            "settings.theme.preview.row.hide",
+                            "settings.theme.preview.row.preferences",
+                            "settings.theme.preview.row.quit"
+                        ],
                         palette: palette,
                         primaryText: primaryText,
                         secondaryText: secondaryText
                     )
                     ThemePreviewColumn(
-                        title: "Window",
-                        rows: ["Minimize", "Zoom", "Bring All to Front"],
+                        titleKey: "settings.theme.preview.column.window",
+                        rowKeys: [
+                            "settings.theme.preview.row.minimize",
+                            "settings.theme.preview.row.zoom",
+                            "settings.theme.preview.row.bring_all_to_front"
+                        ],
                         palette: palette,
                         primaryText: primaryText,
                         secondaryText: secondaryText
                     )
                     ThemePreviewColumn(
-                        title: "Help",
-                        rows: ["Search", "Support", "Shortcuts"],
+                        titleKey: "settings.theme.preview.column.help",
+                        rowKeys: [
+                            "settings.theme.preview.row.search",
+                            "settings.theme.preview.row.support",
+                            "settings.theme.preview.row.shortcuts"
+                        ],
                         palette: palette,
                         primaryText: primaryText,
                         secondaryText: secondaryText
@@ -355,8 +387,8 @@ private struct ThemePreviewCard: View {
 }
 
 private struct ThemePreviewColumn: View {
-    let title: String
-    let rows: [String]
+    let titleKey: String
+    let rowKeys: [String]
     let palette: ThemePalette
     let primaryText: Color
     let secondaryText: Color
@@ -364,13 +396,13 @@ private struct ThemePreviewColumn: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title)
+            Text(LocalizedStringKey(titleKey))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(secondaryText)
 
-            ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+            ForEach(Array(rowKeys.enumerated()), id: \.offset) { index, rowKey in
                 HStack(spacing: 4) {
-                    Text(row)
+                    Text(LocalizedStringKey(rowKey))
                         .font(.caption)
                         .lineLimit(1)
                         .foregroundStyle(primaryText)
@@ -396,6 +428,7 @@ struct HelpSettingsTab: View {
     @ObservedObject var feedbackVM: FeedbackViewModel
     @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
     @Environment(\.appThemePreset) private var appThemePreset
+    @Environment(\.locale) private var locale
 
     private var palette: ThemePalette {
         ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
@@ -416,18 +449,26 @@ struct HelpSettingsTab: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                SettingsSection(title: "Send Feedback") {
-                    Text("Share suggestions or report issues. Title is limited to \(feedbackVM.maxTitleLength) characters and message to \(feedbackVM.maxMessageLength) characters.")
+                SettingsSection(titleKey: "settings.help.feedback.section") {
+                    Text(
+                        L10n.formatted(
+                            "settings.help.feedback.description",
+                            locale: locale,
+                            fallback: "Share suggestions or report issues. Title is limited to %d characters and message to %d characters.",
+                            feedbackVM.maxTitleLength,
+                            feedbackVM.maxMessageLength
+                        )
+                    )
                         .font(.callout)
                         .foregroundStyle(.secondary)
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Email (optional)")
+                        Text("settings.help.feedback.email.label")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
 
                         TextField(
-                            "you@example.com",
+                            "settings.help.feedback.email.placeholder",
                             text: Binding(
                                 get: { feedbackVM.email },
                                 set: { feedbackVM.setEmail($0) }
@@ -447,7 +488,7 @@ struct HelpSettingsTab: View {
                             .textContentType(.emailAddress)
 
                         if feedbackVM.hasInvalidEmail {
-                            Text("Please enter a valid email format.")
+                            Text("settings.help.feedback.error.invalid_email")
                                 .font(.caption)
                                 .foregroundStyle(.orange)
                         }
@@ -455,7 +496,7 @@ struct HelpSettingsTab: View {
 
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Text("Title")
+                            Text("settings.help.feedback.title.label")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
                             Spacer()
@@ -469,7 +510,11 @@ struct HelpSettingsTab: View {
                                 get: { feedbackVM.title },
                                 set: { feedbackVM.setTitle($0) }
                             ),
-                            placeholder: "Short summary",
+                            placeholder: L10n.text(
+                                "settings.help.feedback.title.placeholder",
+                                locale: locale,
+                                fallback: "Short summary"
+                            ),
                             maxLength: feedbackVM.maxTitleLength
                         )
                             .textFieldStyle(.plain)
@@ -487,7 +532,7 @@ struct HelpSettingsTab: View {
 
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Text("Message")
+                            Text("settings.help.feedback.message.label")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
                             Spacer()
@@ -501,7 +546,11 @@ struct HelpSettingsTab: View {
                                 get: { feedbackVM.message },
                                 set: { feedbackVM.setMessage($0) }
                             ),
-                            placeholder: "Tell us what happened and what you expected.",
+                            placeholder: L10n.text(
+                                "settings.help.feedback.message.placeholder",
+                                locale: locale,
+                                fallback: "Tell us what happened and what you expected."
+                            ),
                             maxLength: feedbackVM.maxMessageLength,
                             background: inputBackground,
                             border: inputBorder,
@@ -522,21 +571,29 @@ struct HelpSettingsTab: View {
                                     ProgressView()
                                         .controlSize(.small)
                                 }
-                                Text(feedbackVM.isSubmitting ? "Submitting..." : "Submit Feedback")
+                                if feedbackVM.isSubmitting {
+                                    Text("settings.help.feedback.submit.submitting")
+                                } else {
+                                    Text("settings.help.feedback.submit.button")
+                                }
                             }
                         }
                         .disabled(!feedbackVM.canSubmit)
                         .applyDisabledButtonAppearance()
                     }
 
-                    if let successMessage = feedbackVM.successMessage {
-                        Text(successMessage)
+                    if let successMessageKey = feedbackVM.successMessageKey {
+                        Text(LocalizedStringKey(successMessageKey))
                             .font(.caption)
                             .foregroundStyle(.green)
                     }
 
-                    if let errorMessage = feedbackVM.errorMessage {
-                        Text(errorMessage)
+                    if let errorMessageKey = feedbackVM.errorMessageKey {
+                        Text(LocalizedStringKey(errorMessageKey))
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    } else if let errorMessageRaw = feedbackVM.errorMessageRaw {
+                        Text(errorMessageRaw)
                             .font(.caption)
                             .foregroundStyle(.orange)
                     }
@@ -775,23 +832,23 @@ struct OnboardingTriggerSettingsView: View {
     @ObservedObject var viewModel: SettingsViewModel
 
     var body: some View {
-        SettingsSection(title: "Trigger Settings") {
+        SettingsSection(titleKey: "onboarding.trigger.section") {
             Picker(
-                "Default Trigger",
+                "settings.general.activation.default_trigger",
                 selection: Binding(
                     get: { viewModel.selectedTriggerType == .commandDoubleTap ? .commandDoubleTap : .holdCommand },
                     set: { viewModel.setTriggerType($0) }
                 )
             ) {
-                Text("Hold ⌘ Command").tag(Preferences.Trigger.holdCommand)
-                Text("Double-tap ⌘ Command").tag(Preferences.Trigger.commandDoubleTap)
+                Text("settings.general.activation.trigger.hold_command").tag(Preferences.Trigger.holdCommand)
+                Text("settings.general.activation.trigger.command_double_tap").tag(Preferences.Trigger.commandDoubleTap)
             }
             .pickerStyle(.menu)
 
             if viewModel.selectedTriggerType == .holdCommand {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text("Hold Duration")
+                        Text("settings.general.activation.hold_duration")
                         Spacer()
                         Text("\(viewModel.holdDuration, specifier: "%.1f")s")
                             .monospacedDigit()
@@ -814,7 +871,7 @@ struct OnboardingTriggerSettingsView: View {
 // MARK: - Reusable Section Container
 
 struct SettingsSection<Content: View>: View {
-    let title: String
+    let titleKey: LocalizedStringKey
     @ViewBuilder let content: () -> Content
     @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
     @Environment(\.appThemePreset) private var appThemePreset
@@ -822,7 +879,7 @@ struct SettingsSection<Content: View>: View {
     var body: some View {
         let palette = ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
         VStack(alignment: .leading, spacing: 10) {
-            Text(title)
+            Text(titleKey)
                 .font(.headline)
 
             content()

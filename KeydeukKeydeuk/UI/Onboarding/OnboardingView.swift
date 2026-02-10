@@ -6,29 +6,29 @@ struct OnboardingView: View {
     @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
     @Environment(\.appThemePreset) private var appThemePreset
 
-    private var permissionStatusText: String {
+    private var permissionStatusKey: String {
         switch permissionState {
         case .granted:
-            return "Accessibility: Granted"
+            return "onboarding.permission.status.granted"
         case .denied:
-            return "Accessibility: Denied"
+            return "onboarding.permission.status.denied"
         case .notDetermined:
-            return "Accessibility: Not Determined"
+            return "onboarding.permission.status.not_determined"
         }
     }
 
     var body: some View {
         let palette = ThemePalette.resolved(for: appThemePreset, scheme: appEffectiveColorScheme)
         VStack(alignment: .leading, spacing: 10) {
-            Text("Onboarding")
+            Text("onboarding.title")
                 .font(.headline)
-            Text("Grant Accessibility permission and choose a default activation trigger (hold ⌘ or double-tap ⌘).")
+            Text("onboarding.description")
                 .foregroundStyle(.secondary)
-            Text(permissionStatusText)
+            Text(LocalizedStringKey(permissionStatusKey))
                 .font(.callout.weight(.semibold))
 
             HStack(spacing: 8) {
-                Button("Request Permission") {
+                Button("onboarding.request_permission") {
                     requestPermissionPrompt()
                 }
                 .buttonStyle(.borderedProminent)

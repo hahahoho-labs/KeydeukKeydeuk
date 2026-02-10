@@ -14,15 +14,15 @@ enum ThemeText {
         }
     }
 
-    static func description(for theme: Preferences.Theme) -> String {
+    static func descriptionKey(for theme: Preferences.Theme) -> LocalizedStringKey {
         switch theme {
-        case .system: return "Follow macOS appearance with Frost palette"
-        case .light: return "Light appearance with Frost palette"
-        case .dark: return "Dark appearance with Frost palette"
-        case .graphite: return "Balanced neutral dark theme"
-        case .warmPaper: return "Warm low-glare paper-like theme"
-        case .nordMist: return "Cool blue-gray dark theme"
-        case .highContrast: return "Maximum readability and separation"
+        case .system: return "theme.description.system"
+        case .light: return "theme.description.light"
+        case .dark: return "theme.description.dark"
+        case .graphite: return "theme.description.graphite"
+        case .warmPaper: return "theme.description.warm_paper"
+        case .nordMist: return "theme.description.nord_mist"
+        case .highContrast: return "theme.description.high_contrast"
         }
     }
 }

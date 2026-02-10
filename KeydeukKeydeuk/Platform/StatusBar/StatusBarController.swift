@@ -5,6 +5,8 @@ import Foundation
 final class StatusBarController: NSObject {
     private var statusItem: NSStatusItem?
     private var menu: NSMenu?
+    private var settingsItem: NSMenuItem?
+    private var quitItem: NSMenuItem?
 
     var onPrimaryClick: (() -> Void)?
     var onSettingsClick: (() -> Void)?
@@ -28,6 +30,13 @@ final class StatusBarController: NSObject {
         quitItem.target = self
         menu.addItem(quitItem)
         self.menu = menu
+        self.settingsItem = settingsItem
+        self.quitItem = quitItem
+    }
+
+    func updateMenuTitles(settings: String, quit: String) {
+        settingsItem?.title = settings
+        quitItem?.title = quit
     }
 
     @objc

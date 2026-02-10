@@ -15,10 +15,12 @@ struct OverlayView: View {
     @ObservedObject var viewModel: OverlayViewModel
     @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
     @Environment(\.appThemePreset) private var appThemePreset
+    @Environment(\.locale) private var locale
 
     private var groupedShortcuts: [ShortcutGroup] {
         let shortcuts = viewModel.filteredShortcuts
-        let grouped = Dictionary(grouping: shortcuts) { $0.section ?? "General" }
+        let defaultSectionTitle = L10n.text("overlay.section.general", locale: locale, fallback: "General")
+        let grouped = Dictionary(grouping: shortcuts) { $0.section ?? defaultSectionTitle }
         return grouped
             .map { ShortcutGroup(id: $0.key, title: $0.key, shortcuts: $0.value) }
             .sorted { $0.title < $1.title }
@@ -89,7 +91,7 @@ struct OverlayView: View {
             Image(systemName: "magnifyingglass")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            TextField("Search shortcuts…", text: $viewModel.query)
+            TextField("overlay.search.placeholder", text: $viewModel.query)
                 .textFieldStyle(.plain)
                 .font(.callout)
         }
@@ -153,10 +155,10 @@ struct OverlayView: View {
             Image(systemName: "keyboard")
                 .font(.system(size: 40))
                 .foregroundStyle(.tertiary)
-            Text("No shortcuts yet")
+            Text("overlay.empty.title")
                 .font(.headline)
                 .foregroundStyle(.secondary)
-            Text("Catalog data for this app is not added yet.")
+            Text("overlay.empty.description")
                 .font(.callout)
                 .foregroundStyle(.tertiary)
         }
@@ -167,25 +169,25 @@ struct OverlayView: View {
 
     private var modifierLegend: some View {
         HStack(spacing: 16) {
-            legendPair("⌘", "command")
-            legendPair("⌃", "control")
-            legendPair("⇧", "shift")
-            legendPair("⌥", "option")
-            legendPair("⇥", "tab")
-            legendPair("⎋", "esc")
-            legendPair("↩", "return")
-            legendPair("⌫", "delete")
+            legendPair("⌘", key: "overlay.legend.command")
+            legendPair("⌃", key: "overlay.legend.control")
+            legendPair("⇧", key: "overlay.legend.shift")
+            legendPair("⌥", key: "overlay.legend.option")
+            legendPair("⇥", key: "overlay.legend.tab")
+            legendPair("⎋", key: "overlay.legend.esc")
+            legendPair("↩", key: "overlay.legend.return")
+            legendPair("⌫", key: "overlay.legend.delete")
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
     }
 
-    private func legendPair(_ symbol: String, _ name: String) -> some View {
+    private func legendPair(_ symbol: String, key: String) -> some View {
         HStack(spacing: 3) {
             Text(symbol)
                 .font(.callout.monospaced().weight(.medium))
                 .foregroundStyle(.primary.opacity(0.6))
-            Text(name)
+            Text(LocalizedStringKey(key))
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
         }

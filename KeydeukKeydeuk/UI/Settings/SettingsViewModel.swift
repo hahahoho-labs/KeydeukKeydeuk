@@ -15,19 +15,33 @@ final class SettingsViewModel: ObservableObject {
     }
 
     @Published private(set) var preferences: Preferences
-    @Published private(set) var errorMessage: String?
+    @Published private(set) var errorMessageKey: String?
     @Published private(set) var isCapturingCustomHotkey = false
 
     private let loadPreferences: LoadPreferencesUseCase
     private let updatePreferencesUseCase: UpdatePreferencesUseCase
+    private let languageOptionsProvider: any LanguageOptionProviding
     private var hotkeyCaptureMonitor: Any?
 
-    init(
+    convenience init(
         loadPreferences: LoadPreferencesUseCase,
         updatePreferences: UpdatePreferencesUseCase
     ) {
+        self.init(
+            loadPreferences: loadPreferences,
+            updatePreferences: updatePreferences,
+            languageOptionsProvider: SupportedLanguageCatalog()
+        )
+    }
+
+    init(
+        loadPreferences: LoadPreferencesUseCase,
+        updatePreferences: UpdatePreferencesUseCase,
+        languageOptionsProvider: any LanguageOptionProviding
+    ) {
         self.loadPreferences = loadPreferences
         self.updatePreferencesUseCase = updatePreferences
+        self.languageOptionsProvider = languageOptionsProvider
         self.preferences = loadPreferences.execute()
     }
 
@@ -38,6 +52,8 @@ final class SettingsViewModel: ObservableObject {
     var autoHideOnEsc: Bool { preferences.autoHideOnEsc }
     var autoHideOnAppSwitch: Bool { preferences.autoHideOnAppSwitch }
     var selectedTheme: Preferences.Theme { preferences.theme }
+    var selectedLanguage: Preferences.Language { preferences.language }
+    var supportedLanguages: [SupportedLanguageOption] { languageOptionsProvider.options }
 
     var primaryCustomHotkey: EditableHotkey? {
         guard let hotkey = preferences.customHotkeys.first else { return nil }
@@ -118,10 +134,14 @@ final class SettingsViewModel: ObservableObject {
         updatePreferences { $0.theme = theme }
     }
 
+    func setLanguage(_ language: Preferences.Language) {
+        updatePreferences { $0.language = language }
+    }
+
     // MARK: - Private
 
     func dismissError() {
-        errorMessage = nil
+        errorMessageKey = nil
     }
 
     deinit {
@@ -136,18 +156,18 @@ final class SettingsViewModel: ObservableObject {
         do {
             try updatePreferencesUseCase.execute(next)
             preferences = next
-            errorMessage = nil
+            errorMessageKey = nil
         } catch {
             log.error("설정 저장 실패: \(error.localizedDescription)")
             if let updateError = error as? UpdatePreferencesUseCase.Error {
                 switch updateError {
                 case .invalidHotkey:
-                    errorMessage = "Shortcut needs at least one modifier key."
+                    errorMessageKey = "settings.error.shortcut_modifier_required"
                 case .duplicateHotkey:
-                    errorMessage = "Shortcut is already registered."
+                    errorMessageKey = "settings.error.shortcut_duplicate"
                 }
             } else {
-                errorMessage = "Failed to save settings. Please try again."
+                errorMessageKey = "settings.error.save_failed"
             }
         }
     }

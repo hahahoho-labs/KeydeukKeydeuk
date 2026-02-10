@@ -13,6 +13,7 @@ final class AppContainer {
     let onboardingViewModel: OnboardingViewModel
     let feedbackViewModel: FeedbackViewModel
     let themeModeStore: ThemeModeStore
+    let appLocaleStore: AppLocaleStore
 
     private var orchestrator: AppOrchestrator?
     private let statusBarController: StatusBarController
@@ -74,6 +75,9 @@ final class AppContainer {
         self.themeModeStore = ThemeModeStore(
             initialTheme: settingsViewModel.selectedTheme
         )
+        self.appLocaleStore = AppLocaleStore(
+            initialLanguage: settingsViewModel.selectedLanguage
+        )
 
         self.onboardingViewModel = OnboardingViewModel(
             loadPreferences: loadPreferences,
@@ -89,7 +93,8 @@ final class AppContainer {
         self.overlayPanelController = OverlayPanelController(
             state: overlayState,
             viewModel: overlayViewModel,
-            themeModeStore: themeModeStore
+            themeModeStore: themeModeStore,
+            localeStore: appLocaleStore
         )
         self.statusBarController = StatusBarController()
 
@@ -110,6 +115,15 @@ final class AppContainer {
             .sink { [weak self] prefs in
                 self?.orchestrator?.updatePreferences(prefs)
                 self?.themeModeStore.update(theme: prefs.theme)
+                self?.appLocaleStore.update(language: prefs.language)
+                if let self {
+                    self.updateStatusBarTexts()
+                    self.settingsWindowController?.window?.title = L10n.text(
+                        "settings.window.title",
+                        locale: self.appLocaleStore.locale,
+                        fallback: "Settings"
+                    )
+                }
             }
             .store(in: &cancellables)
         self.statusBarController.onPrimaryClick = { [weak self] in
@@ -172,6 +186,7 @@ final class AppContainer {
         settingsViewModel.refreshPreferences()
         overlayPanelController.start()
         statusBarController.start()
+        updateStatusBarTexts()
         orchestrator?.start()
         applyAppPresentation(needsOnboarding: onboardingViewModel.needsOnboarding)
 
@@ -189,9 +204,9 @@ final class AppContainer {
         case .shown, .noCatalog:
             break
         case .needsPermission:
-            onboardingViewModel.showInfoMessage("Accessibility permission is required to show shortcuts.")
+            onboardingViewModel.showInfoMessage(key: "overlay.error.permission_required")
         case .noFocusedApp:
-            onboardingViewModel.showInfoMessage("Could not detect the focused application.")
+            onboardingViewModel.showInfoMessage(key: "overlay.error.focused_app_unavailable")
         }
     }
 
@@ -211,7 +226,7 @@ final class AppContainer {
     }
 
     private func bringMainWindowToFront() {
-        if let window = NSApp.windows.first(where: { $0.title == "Onboarding" || $0.title == "KeydeukKeydeuk" }) {
+        if let window = NSApp.windows.first(where: { !($0 is NSPanel) }) {
             window.makeKeyAndOrderFront(nil)
             return
         }
@@ -225,20 +240,47 @@ final class AppContainer {
         }
 
         let host = NSHostingController(
-            rootView: SettingsWindowView(
+            rootView: SettingsWindowRootView(
                 settingsVM: settingsViewModel,
                 onboardingVM: onboardingViewModel,
                 feedbackVM: feedbackViewModel,
-                themeModeStore: themeModeStore
+                themeModeStore: themeModeStore,
+                localeStore: appLocaleStore
             )
         )
         let window = NSWindow(contentViewController: host)
-        window.title = "Settings"
+        window.title = L10n.text("settings.window.title", locale: appLocaleStore.locale, fallback: "Settings")
         window.styleMask = NSWindow.StyleMask([.titled, .closable, .miniaturizable])
         window.setContentSize(NSSize(width: 760, height: 560))
         window.center()
         let controller = NSWindowController(window: window)
         controller.showWindow(nil)
         settingsWindowController = controller
+    }
+
+    private func updateStatusBarTexts() {
+        let locale = appLocaleStore.locale
+        statusBarController.updateMenuTitles(
+            settings: L10n.text("statusbar.menu.settings", locale: locale, fallback: "Settings"),
+            quit: L10n.text("statusbar.menu.quit", locale: locale, fallback: "Quit")
+        )
+    }
+}
+
+private struct SettingsWindowRootView: View {
+    @ObservedObject var settingsVM: SettingsViewModel
+    @ObservedObject var onboardingVM: OnboardingViewModel
+    @ObservedObject var feedbackVM: FeedbackViewModel
+    @ObservedObject var themeModeStore: ThemeModeStore
+    @ObservedObject var localeStore: AppLocaleStore
+
+    var body: some View {
+        SettingsWindowView(
+            settingsVM: settingsVM,
+            onboardingVM: onboardingVM,
+            feedbackVM: feedbackVM,
+            themeModeStore: themeModeStore
+        )
+        .environment(\.locale, localeStore.locale)
     }
 }

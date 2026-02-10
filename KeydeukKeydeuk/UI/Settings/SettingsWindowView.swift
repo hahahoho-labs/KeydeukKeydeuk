@@ -8,10 +8,18 @@ struct SettingsWindowView: View {
     @ObservedObject var themeModeStore: ThemeModeStore
     @State private var selectedTab: SettingsTab = .general
 
-    enum SettingsTab: String, CaseIterable {
-        case general = "General"
-        case theme = "Theme"
-        case help = "Help"
+    enum SettingsTab: CaseIterable {
+        case general
+        case theme
+        case help
+
+        var titleKey: LocalizedStringKey {
+            switch self {
+            case .general: return "settings.tab.general"
+            case .theme: return "settings.tab.theme"
+            case .help: return "settings.tab.help"
+            }
+        }
 
         var icon: String {
             switch self {
@@ -79,7 +87,7 @@ struct SettingsWindowView: View {
             VStack(spacing: 4) {
                 Image(systemName: tab.icon)
                     .font(.system(size: 16))
-                Text(tab.rawValue)
+                Text(tab.titleKey)
                     .font(.caption.weight(.medium))
             }
             .foregroundStyle(selectedTab == tab ? .primary : .secondary)
@@ -111,17 +119,17 @@ struct SettingsWindowView: View {
 
     private var bottomBar: some View {
         HStack {
-            Button("Quit") {
+            Button("settings.window.quit") {
                 NSApplication.shared.terminate(nil)
             }
 
             Spacer()
 
-            Button("Cancel") {
+            Button("settings.window.cancel") {
                 closeWindow()
             }
 
-            Button("OK") {
+            Button("settings.window.ok") {
                 closeWindow()
             }
             .keyboardShortcut(.defaultAction)

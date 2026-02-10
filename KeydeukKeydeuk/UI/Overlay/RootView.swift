@@ -6,11 +6,11 @@ struct RootView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Welcome to KeydeukKeydeuk")
+            Text("onboarding.welcome.title")
                 .font(.title2.bold())
 
-            if let permissionHint = onboardingVM.permissionHint {
-                Text(permissionHint)
+            if let permissionHintKey = onboardingVM.permissionHintKey {
+                Text(LocalizedStringKey(permissionHintKey))
                     .font(.callout)
                     .foregroundStyle(.orange)
             }
@@ -26,7 +26,7 @@ struct RootView: View {
 
             HStack {
                 Spacer()
-                Button("Finish Setup") {
+                Button("onboarding.finish_setup") {
                     onboardingVM.completeOnboardingIfPossible()
                 }
                 .buttonStyle(.borderedProminent)

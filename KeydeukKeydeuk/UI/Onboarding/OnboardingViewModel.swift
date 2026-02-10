@@ -5,7 +5,7 @@ import Foundation
 @MainActor
 final class OnboardingViewModel: ObservableObject {
     @Published private(set) var permissionState: PermissionState
-    @Published private(set) var permissionHint: String?
+    @Published private(set) var permissionHintKey: String?
     @Published private(set) var needsOnboarding: Bool
 
     private let getAccessibilityPermissionState: GetAccessibilityPermissionStateUseCase
@@ -48,7 +48,7 @@ final class OnboardingViewModel: ObservableObject {
     func refreshPermissionState() {
         permissionState = getAccessibilityPermissionState.execute()
         if permissionState == .granted {
-            permissionHint = nil
+            permissionHintKey = nil
         }
     }
 
@@ -56,10 +56,10 @@ final class OnboardingViewModel: ObservableObject {
         let isGranted = requestAccessibilityPermission.execute()
         refreshPermissionState()
         if isGranted || permissionState == .granted {
-            permissionHint = nil
+            permissionHintKey = nil
             return
         }
-        permissionHint = "Permission request sent. If no prompt appears, allow KeydeukKeydeuk in System Settings > Privacy & Security > Accessibility."
+        permissionHintKey = "onboarding.hint.permission_requested"
         startPermissionStatePolling()
     }
 
@@ -68,14 +68,14 @@ final class OnboardingViewModel: ObservableObject {
         startPermissionStatePolling()
     }
 
-    func showInfoMessage(_ message: String) {
-        permissionHint = message
+    func showInfoMessage(key: String) {
+        permissionHintKey = key
     }
 
     func completeOnboardingIfPossible() {
         refreshPermissionState()
         guard canFinishOnboarding else {
-            permissionHint = "Please grant Accessibility permission to finish onboarding."
+            permissionHintKey = "onboarding.hint.permission_required"
             return
         }
 
@@ -84,9 +84,9 @@ final class OnboardingViewModel: ObservableObject {
         do {
             try updatePreferencesUseCase.execute(prefs)
             needsOnboarding = false
-            permissionHint = nil
+            permissionHintKey = nil
         } catch {
-            permissionHint = "Failed to save onboarding state."
+            permissionHintKey = "onboarding.hint.save_failed"
         }
     }
 

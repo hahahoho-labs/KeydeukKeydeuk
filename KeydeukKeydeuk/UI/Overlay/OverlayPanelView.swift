@@ -3,6 +3,7 @@ import SwiftUI
 struct OverlayPanelView: View {
     @ObservedObject var viewModel: OverlayViewModel
     @ObservedObject var themeModeStore: ThemeModeStore
+    @ObservedObject var localeStore: AppLocaleStore
     @Environment(\.appEffectiveColorScheme) private var appEffectiveColorScheme
     @Environment(\.appThemePreset) private var appThemePreset
 
@@ -26,5 +27,6 @@ struct OverlayPanelView: View {
             mode: themeModeStore.selectedThemeMode,
             preset: themeModeStore.selectedThemePreset
         )
+        .environment(\.locale, localeStore.locale)
     }
 }
