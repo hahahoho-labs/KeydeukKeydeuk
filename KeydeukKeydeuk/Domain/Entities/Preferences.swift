@@ -200,8 +200,9 @@ struct Preferences: Codable, Equatable {
         let defaults = Preferences.default
 
         if let rawTrigger = try container.decodeIfPresent(String.self, forKey: .trigger) {
-            if rawTrigger == "globalHotkey" {
-                trigger = .customShortcut
+            // custom shortcut trigger is temporarily disabled; migrate to supported default trigger.
+            if rawTrigger == "globalHotkey" || rawTrigger == Trigger.customShortcut.rawValue {
+                trigger = defaults.trigger
             } else {
                 trigger = Trigger(rawValue: rawTrigger) ?? defaults.trigger
             }
@@ -210,9 +211,8 @@ struct Preferences: Codable, Equatable {
         }
         customHotkeys = try container.decodeIfPresent([HotkeyBinding].self, forKey: .customHotkeys) ?? defaults.customHotkeys
 
-        // Legacy migration: globalHotkey 모드로 쓰던 단일 핫키를 customHotkeys로 이전
+        // Legacy migration: 이전 단일 핫키 스키마를 customHotkeys로 이전
         if customHotkeys.isEmpty,
-           trigger == .commandDoubleTap,
            let legacyKeyCode = try container.decodeIfPresent(Int.self, forKey: .hotkeyKeyCode),
            let legacyModifiersRawValue = try container.decodeIfPresent(Int.self, forKey: .hotkeyModifiersRawValue) {
             customHotkeys = [HotkeyBinding(keyCode: legacyKeyCode, modifiersRawValue: legacyModifiersRawValue)]

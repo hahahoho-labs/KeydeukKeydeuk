@@ -77,4 +77,46 @@ final class PreferencesTests: XCTestCase {
         let decoded = try JSONDecoder().decode(Preferences.self, from: Data(json.utf8))
         XCTAssertEqual(decoded.language.rawValue, "ja")
     }
+
+    func testDecodeLegacyGlobalHotkeyTrigger_migratesToHoldCommand() throws {
+        let legacyJSON = """
+        {
+          "trigger": "globalHotkey",
+          "customHotkeys": [],
+          "hotkeyKeyCode": 8,
+          "hotkeyModifiersRawValue": 1,
+          "holdDurationSeconds": 1.0,
+          "autoHideOnAppSwitch": true,
+          "autoHideOnEsc": true,
+          "theme": "system",
+          "hasCompletedOnboarding": false
+        }
+        """
+
+        let decoded = try JSONDecoder().decode(Preferences.self, from: Data(legacyJSON.utf8))
+        XCTAssertEqual(decoded.trigger, .holdCommand)
+        XCTAssertEqual(decoded.customHotkeys.count, 1)
+        XCTAssertEqual(decoded.customHotkeys.first?.keyCode, 8)
+        XCTAssertEqual(decoded.customHotkeys.first?.modifiersRawValue, 1)
+    }
+
+    func testDecodeCustomShortcutTrigger_migratesToHoldCommand() throws {
+        let legacyJSON = """
+        {
+          "trigger": "customShortcut",
+          "customHotkeys": [{ "keyCode": 12, "modifiersRawValue": 1 }],
+          "holdDurationSeconds": 1.0,
+          "autoHideOnAppSwitch": true,
+          "autoHideOnEsc": true,
+          "theme": "system",
+          "hasCompletedOnboarding": false
+        }
+        """
+
+        let decoded = try JSONDecoder().decode(Preferences.self, from: Data(legacyJSON.utf8))
+        XCTAssertEqual(decoded.trigger, .holdCommand)
+        XCTAssertEqual(decoded.customHotkeys.count, 1)
+        XCTAssertEqual(decoded.customHotkeys.first?.keyCode, 12)
+        XCTAssertEqual(decoded.customHotkeys.first?.modifiersRawValue, 1)
+    }
 }
