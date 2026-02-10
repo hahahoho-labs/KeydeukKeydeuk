@@ -146,6 +146,7 @@ SRP는 함수의 개수가 아니라 **사람과 역할**에 관한 원칙이다
 KeydeukKeydeuk/
   App/
     AppContainer.swift
+    AppRuntimeCoordinator.swift
     AppOrchestrator.swift
     KeydeukKeydeukApp.swift
     OverlayPanelController.swift
@@ -243,12 +244,15 @@ KeydeukKeydeuk/
 - Port 구현체 생성(Data/Platform)
 - UseCase 생성(Application)
 - ViewModel 생성(UI)
-- AppWindowCoordinator/StatusBar/Orchestrator 라우팅 조합
-- `SettingsViewModel.$preferences`를 구독해 `AppOrchestrator.updatePreferences(...)`로 전파
-- `ThemeModeStore`와 `AppLocaleStore`를 전달해 오버레이/설정 창의 테마·언어를 동기화
-- StatusBar 좌/우클릭 라우팅
-- 권한 허용 후 앱 복귀 시 자동 오버레이 표시 처리(`pendingOverlayAfterPermission`)
-- 온보딩 상태에 따라 AppWindowCoordinator에 프레젠테이션 적용 위임
+- AppWindowCoordinator/RuntimeCoordinator/Orchestrator를 결선
+
+### `App/AppRuntimeCoordinator.swift`
+
+- 앱 런타임 이벤트 바인딩 담당
+- `SettingsViewModel.$preferences` 구독 → Orchestrator/Theme/Locale/StatusBar 동기화
+- StatusBar 좌/우클릭 액션 라우팅
+- 앱 활성화 복귀 시 접근성 권한 재확인 후 자동 오버레이 표시
+- 온보딩 상태 변경 시 AppWindowCoordinator 프레젠테이션 적용
 
 ### `App/AppOrchestrator.swift`
 

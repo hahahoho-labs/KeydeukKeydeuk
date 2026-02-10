@@ -38,6 +38,7 @@ KeydeukKeydeuk는 macOS용 단축키 치트시트(오버레이) MVP 프로젝트
 KeydeukKeydeuk/
   App/
     AppContainer.swift          # DI 조립, 라이프사이클, 라우팅
+    AppRuntimeCoordinator.swift # 런타임 이벤트 바인딩/상태바 라우팅/프레젠테이션 동기화
     AppOrchestrator.swift       # 키보드 이벤트 → 오버레이 제어
     KeydeukKeydeukApp.swift     # @main 진입점, SwiftUI Scene 정의
     OverlayPanelController.swift # NSPanel 생성/표시/숨김
@@ -118,7 +119,8 @@ KeydeukKeydeuk/
 - App
   - DI 조립, 앱 부트스트랩, 유스케이스 오케스트레이션, 라우팅
   - AppOrchestrator: 키보드 이벤트 수신 → 트리거 분기 → UseCase 실행
-  - AppContainer: ViewModel/UseCase/Platform 조립, StatusBar 이벤트 라우팅
+  - AppContainer: ViewModel/UseCase/Platform 조립
+  - AppRuntimeCoordinator: 상태바 이벤트 라우팅, 설정/권한 상태 구독, 윈도우 프레젠테이션 동기화
 - Domain
   - Entity/Value Object, 정책(Policy), 포트(Protocol)
   - 순수 Swift, 외부 프레임워크 의존 없음
