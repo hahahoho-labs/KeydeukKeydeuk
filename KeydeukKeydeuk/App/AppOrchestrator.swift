@@ -53,8 +53,10 @@ final class AppOrchestrator {
 
     func start() {
         eventSource.onEvent = { [weak self] event in
-            guard let self else { return }
-            self.handleEvent(event)
+            Task { @MainActor in
+                guard let self else { return }
+                self.handleEvent(event)
+            }
         }
         eventSource.start()
     }

@@ -59,6 +59,11 @@ struct ShowOverlayForCurrentAppUseCase {
         }
 
         presenter.show(catalog: catalog, app: app)
+        if catalog.shortcuts.isEmpty {
+            log.info("✅ 오버레이 표시 요청 완료 → .noCatalog")
+            return .noCatalog
+        }
+
         log.info("✅ 오버레이 표시 요청 완료 → .shown")
         return .shown
     }
